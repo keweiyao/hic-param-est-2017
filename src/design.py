@@ -68,7 +68,8 @@ class Design:
         }[self.beam_energy]
 
         # this label is so much longer than all the others
-        etas_slp_label = r'{atan}(\eta/s {slope}) [{GeV}^{-1}]'
+        # etas_slp_label = r'{atan}(\eta/s {slope}) [{GeV}^{-1}]'
+        etas_slp_label = r'\eta/s {slope} [{GeV}^{-1}]'
         # upper bound of atan(slope)
         pi_2 = math.pi/2
 
@@ -109,6 +110,45 @@ class Design:
         self.array = self.min + (self.max - self.min)*generate_lhs(
             npoints=npoints, ndim=len(self.keys), seed=seed
         )
+
+        # return
+
+        i = self.keys.index('etas_slp_atan')
+        # slope_max = 20
+
+        self.array[:, i] = np.tan(self.array[:, i])
+        slope_max = 8.
+        self.range[i] = (0., slope_max)
+        self.max[i] = slope_max
+        remove = set((self.array[:, i] > 10).nonzero()[0])
+
+        # atan_max = math.atan(slope_max)
+        # remove = set((self.array[:, i] > atan_max).nonzero()[0])
+        # self.range[i] = (0., atan_max)
+
+        # self.array[:, i] = np.log10(1 + np.tan(self.array[:, i]))
+        # self.range[i] = (0., math.log10(1 + slope_max))
+
+        # log1p_max = math.log(1 + slope_max)
+        # self.array[:, i] = np.log(1 + np.tan(self.array[:, i]))
+        # self.range[i] = (0., log1p_max)
+        # remove = set((self.array[:, i] > log1p_max).nonzero()[0])
+
+        i = self.keys.index('tau_fs')
+        remove.update(set((self.array[:, i] < .02).nonzero()[0]))
+        # self.range[i] = (tau_min, self.range[i][1])
+
+        # remove outliers
+        # TODO fix and re-run?
+        outliers = {281, 340}
+        remove.update(outliers)
+        self.points = [
+            p for n, p in enumerate(self.points)
+            if n not in remove
+        ]
+        self.array = np.delete(self.array, list(remove), axis=0)
+        # self.array[i, self.keys.index('tau_fs')] = 1e-3
+        # self.points[i] += '-2'
 
     def __array__(self):
         return self.array
