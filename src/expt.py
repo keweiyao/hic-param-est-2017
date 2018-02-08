@@ -6,13 +6,23 @@ Prints all data when run as a script.
 from collections import defaultdict
 import logging
 import pickle
+import warnings
 from urllib.request import urlopen
 
 import numpy as np
-import yaml
+import yaml, re
 
-from . import cachedir, systems
+from . import cachedir, prelimdir, systems
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 class HEPData:
     """
@@ -71,46 +81,54 @@ class HEPData:
             if trans(x['header']['name']) == name:
                 return x['values']
 
-        raise LookupError("no x data with name '{}'".format(name))
 
     @property
-    def cent(self):
+    def pT(self):
         """
-        The centrality bins as a list of (low, high) tuples.
+        The pT bins as a list of (low, high) tuples.
 
         """
         try:
-            return self._cent
+            return self._pT
         except AttributeError:
             pass
 
-        x = self.x('centrality', case=False)
-
+        for name in ['PT', 'electron $\\it{p}_{T} (GeV/\\it{c})$',
+                      '$p_{\\rm T}$', '<pT> +-(dx)']:
+            x = self.x(name, case=False)
+ 
+            if x != None:
+               break
         if x is None:
-            raise LookupError('no centrality data')
+            raise LookupError(bcolors.FAIL+"no x data with name '{}'".format(name)+bcolors.ENDC)
 
         try:
-            cent = [(v['low'], v['high']) for v in x]
+            pT = [(v['low'], v['high']) for v in x]
         except KeyError:
             # try to guess bins from midpoints
-            mids = [v['value'] for v in x]
-            width = set(a - b for a, b in zip(mids[1:], mids[:-1]))
-            if len(width) > 1:
-                raise RuntimeError('variable bin widths')
-            d = width.pop() / 2
-            cent = [(m - d, m + d) for m in mids]
+            if np.isreal(x[0]['value']):
+                mids = [v['value'] for v in x]    
+                width = set(a - b for a, b in zip(mids[1:], mids[:-1]))
+                if len(width) > 1:
+                    raise RuntimeError('variable bin widths')
+                d = width.pop() / 2
+                pT = [(m - d, m + d) for m in mids]
+            else:
+                ll = [re.split(' |\+|\,-', v['value']) for v in x]
+                pT = [(float(l[0])-float(l[2]), float(l[0])+float(l[2]))
+                       for l in ll]
 
-        self._cent = cent
+        self._pT = pT
 
-        return cent
+        return pT
 
-    @cent.setter
-    def cent(self, value):
+    @pT.setter
+    def pTcent(self, value):
         """
         Manually set centrality bins.
 
         """
-        self._cent = value
+        self._pT = value
 
     def y(self, name=None, **quals):
         """
@@ -124,11 +142,11 @@ class HEPData:
                     return y['values']
 
         raise LookupError(
-            "no y data with name '{}' and qualifiers '{}'"
-            .format(name, quals)
+            bcolors.FAIL+"no y data with name '{}' and qualifiers '{}'"
+            .format(name, quals)+bcolors.ENDC
         )
 
-    def dataset(self, name=None, maxcent=70, ignore_bins=[], **quals):
+    def dataset(self, name=None, ignore_bins=[], **quals):
         """
         Return a dict containing:
 
@@ -147,18 +165,18 @@ class HEPData:
         skipped.
 
         """
-        cent = []
+        pT = []
         y = []
         yerr = defaultdict(list)
 
-        for c, v in zip(self.cent, self.y(name, **quals)):
+        for ipT, v in zip(self.pT, self.y(name, **quals)):
             # skip missing values
             # skip bins whose upper edge is greater than maxcent
             # skip explicitly ignored bins
-            if v['value'] == '-' or c[1] > maxcent or c in ignore_bins:
+            if v['value'] == '-' or ipT in ignore_bins:
                 continue
 
-            cent.append(c)
+            pT.append(ipT)
             y.append(v['value'])
 
             for err in v['errors']:
@@ -167,16 +185,15 @@ class HEPData:
                 except KeyError:
                     e = err['asymerror']
                     if abs(e['plus']) != abs(e['minus']):
-                        raise RuntimeError(
-                            'asymmetric errors are not implemented'
-                        )
-                    e = abs(e['plus'])
+                        warnings.warn(bcolors.WARNING + 'Asymmetric errors are not implemented'+ bcolors.ENDC)
+                    continue
+                    
 
                 yerr[err.get('label', 'sum')].append(e)
 
         return dict(
-            cent=cent,
-            x=np.array([(a + b)/2 for a, b in cent]),
+            pT=pT,
+            x=np.array([(a + b)/2 for a, b in pT]),
             y=np.array(y),
             yerr={k: np.array(v) for k, v in yerr.items()},
         )
@@ -204,129 +221,94 @@ def _data():
     """
     data = {s: {} for s in systems}
 
-    # PbPb2760 and PbPb5020 dNch/deta
-    for system, args, name in [
-            ('PbPb2760', (880049, 1), 'D(N)/DETARAP'),
-            ('PbPb5020', (1410589, 2),
-             r'$\mathrm{d}N_\mathrm{ch}/\mathrm{d}\eta$'),
-    ]:
-        data[system]['dNch_deta'] = {None: HEPData(*args).dataset(name)}
+    # Naming scheme for heavy quark observable
+    # System/Observable/Particle-species/Centrality->dataset as function of pT
+    # ALICE, p+p, sqrts=7TeV, D meson spectra
 
-    # PbPb2760 transverse energy
-    # ignore bin 0-5 since it's redundant with 0-2.5 and 2.5-5
-    dset = HEPData(1427723, 1).dataset('$E_{T}$', ignore_bins=[(0, 5)])
-    dset['yerr']['sys'] = dset['yerr'].pop('sys,total')
-    data['PbPb2760']['dET_deta'] = {None: dset}
+    ####### SQRTS = 7000 GeV #####################
+    if 'pp7000' in systems:
+        data['pp7000'].update({'dX/dp/dy': {}})
+        # 1) Particle spectra
+        for i, D in enumerate(['D0', 'D+', 'D*'], start=1):
+            dset = HEPData(1511870, i+1).dataset('d$\\sigma$/d $p_{\\rm{T}}$dy')
+            data['pp7000']['dX/dp/dy'][D] = {'MB': dset}
 
-    # PbPb2760 identified dN/dy and mean pT
-    system = 'PbPb2760'
+    ####### SQRTS = 2760 GeV #####################
+    if 'PbPb2760' in systems:
+        data['PbPb2760'].update({'V2': {'D-avg':{}, 'HF->e+e-':{}, 'D0':{}},
+                                 'RAA': {'HF->e+e-':{}, 'D-avg':{}, 'B-avg':{}}
+                                       })
 
-    for obs, table, combine_func in [
-            ('dN_dy', 31, np.sum),
-            ('mean_pT', 32, np.mean),
-    ]:
-        data[system][obs] = {}
-        d = HEPData(1222333, table)
-        for key, re_products in [
-            ('pion', ['PI+', 'PI-']),
-            ('kaon', ['K+', 'K-']),
-            ('proton', ['P', 'PBAR']),
-        ]:
-            dsets = [
-                d.dataset(RE='PB PB --> {} X'.format(i))
-                for i in re_products
-            ]
+        # 1) ALICE, Pb+Pb, Flow, D meson
+        dset = HEPData(1233087, 4).dataset('V2')
+        data['PbPb2760']['V2']['D-avg'].update({'30-50': dset})
 
-            data[system][obs][key] = dict(
-                dsets[0],
-                y=combine_func([d['y'] for d in dsets], axis=0),
-                yerr={
-                    e: combine_func([d['yerr'][e] for d in dsets], axis=0)
-                    for e in dsets[0]['yerr']
-                }
-            )
+        # 2) ALICE, Pb+Pb, Flow, HF -> e+e-
+        for i, cen in enumerate(['0-10', '10-20', '20-40'], start=1):
+            dset = HEPData(1466626, i).dataset("v2 +-(stat) +(systUncorr) - (systUncorr)")
+            data['PbPb2760']['V2']['HF->e+e-'].update({cen: dset}) 
 
-    # PbPb2760 strange baryon yields
-    data['PbPb2760']['dN_dy']['Lambda'] = HEPData(1243863, 23).dataset(
-        RE='PB PB --> LAMBDA X'
-    )
+        # 3) ALICE, Pb+Pb, Flow, D0
+        for i, cen in enumerate(['0-10', '10-20', '30-50'], start=1):
+            dset = HEPData(1294938, i).dataset("V2")
+            data['PbPb2760']['V2']['D0'].update({cen: dset})
+        
+        # 4) ALICE, Pb+Pb, RAA, D meson
+        for i, cen in enumerate(['0-10', '30-50'], start=15):
+            dset = HEPData(1394580, i).dataset('$R_{\\rm AA}$')
+            data['PbPb2760']['RAA']['D-avg'].update({cen: dset})
+        # 5) ALICE, Pb+Pb, RAA, c, b hadron to e+e-
+        for i, cen in enumerate(['0-10', '10-20', '20-30', 
+                       '30-40', '40-50', '50-80'], start=7):
+            dset = HEPData(1487727, i).dataset('$R_{AA}$')
+            data['PbPb2760']['RAA']['HF->e+e-'].update({cen: dset})
 
-    d = HEPData(1243865, 11)
-    for s in ['Xi', 'Omega']:
-        data[system]['dN_dy'][s] = d.dataset(
-            RE='PB PB --> ({0}- + {0}BAR+) X'.format(s.upper())
-        )
 
-    # PbPb2760 mean pT fluctuations
-    d = HEPData(1307102, 6, reverse=True)
-    name = r'$\sqrt{C_m}/M(p_{\rm T})_m$'
-    # the table only has Npart, but they are actually 5% centrality bins
-    width = 5.
-    d.cent = [(n*width, (n+1)*width) for n, _ in enumerate(d.y(name))]
-    data['PbPb2760']['pT_fluct'] = {None: d.dataset(name, maxcent=60)}
+    ####### SQRTS = 5020 GeV #####################
+    if 'PbPb5020' in systems:
+        data['PbPb5020'].update({'V2': {'D-avg': {}, 'D0': {}},
+                                 'RAA': {'D0': {}}
+                                   })
+        # 1) ALICE, Pb+Pb, meson flow
+        dset = HEPData(1608612, 5).dataset('$v_2$')
+        data['PbPb5020']['V2']['D-avg'].update({'30-50': dset})
 
-    # PbPb2760 and PbPb5020 flows
-    for system, tables_nk in [
-            ('PbPb5020', [
-                (1, [(2, 2), (2, 4)]),
-                (2, [(3, 2), (4, 2)]),
-            ]),
-            ('PbPb2760', [
-                (3, [(2, 2), (2, 4)]),
-                (4, [(3, 2), (4, 2)]),
-            ]),
-    ]:
-        data[system]['vnk'] = {}
+        # 2) Prelim Data! CMS, Pb+Pb, D0 flow
+        for cen in ['0-10','10-30','30-50']:
+            pTL, pTH, v2, stat, sys1, sys2 = np.loadtxt(prelimdir/'CMS-v2-{}.dat'.format(cen)).T
+            dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
+                    'x' : (pTL+pTH)/2.,
+                    'y' : v2,
+                    'yerr': { 'stat': stat,
+                              'sys': sys1,
+                              'sys2': sys2}
+                    }
+            data['PbPb5020']['V2']['D0'].update({cen: dset})
 
-        for table, nk in tables_nk:
-            d = HEPData(1419244, table)
-            for n, k in nk:
-                data[system]['vnk'][n, k] = d.dataset(
-                    'V{}{{{}{}}}'.format(
-                        n, k, ', |DELTAETA|>1' if k == 2 else ''
-                    ),
-                    maxcent=(70 if n == 2 else 50)
-                )
-
-    # PbPb2760 central flows vn{2}
-    system, obs = 'PbPb2760', 'vnk_central'
-    data[system][obs] = {}
-
-    for n, table, sys_err_frac in [(2, 11, .025), (3, 12, .040)]:
-        dset = HEPData(900651, table).dataset()
-        # the (unlabeled) errors in the dataset are actually stat
-        dset['yerr']['stat'] = dset['yerr'].pop('sum')
-        # sys error is not provided -- use estimated fractions
-        dset['yerr']['sys'] = sys_err_frac * dset['y']
-        data[system][obs][n, 2] = dset
-
-    # PbPb2760 flow correlations
-    for obs, table in [
-            ('sc', 1),
-            ('sc_normed', 2),
-            ('sc_central', 3),
-            ('sc_normed_central', 4)
-    ]:
-        d = HEPData(1452590, table)
-        data['PbPb2760'][obs] = {
-            mn: d.dataset('SC({},{})'.format(*mn))
-            for mn in [(3, 2), (4, 2)]
-        }
+        # 3) Prelim Data! CMS, Pb+Pb, D0 RAA
+        for cen in ['0-10','0-100']:
+            pTL, pTH, RAA, stat, syserror = np.loadtxt(prelimdir/'CMS-Raa-{}.dat'.format(cen)).T
+            dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
+                    'x' : (pTL+pTH)/2.,
+                    'y' : RAA,
+                    'yerr': { 'stat': stat,
+                              'sys': syserror}
+                    }
+            data['PbPb5020']['RAA']['D0'].update({cen: dset})
 
     return data
-
-
 #: A nested dict containing all the experimental data, created by the
 #: :func:`_data` function.
 data = _data()
 
 
 def cov(
-        system, obs1, subobs1, obs2, subobs2,
-        stat_frac=1e-4, sys_corr_length=100, cross_factor=.8,
+        system1, obs1, specie1, cen1, system2, obs2, specie2, cen2,
+        stat_frac=1e-4, sys_corr_length=10, cross_factor=.5,
         corr_obs={
             frozenset({'dNch_deta', 'dET_deta', 'dN_dy'}),
-        }
+        },
+        norm_by_y=False
 ):
     """
     Estimate a covariance matrix for the given system and pair of observables,
@@ -353,8 +335,8 @@ def cov(
     since they are all related to particle / energy production.
 
     """
-    def unpack(obs, subobs):
-        dset = data[system][obs][subobs]
+    def unpack(system, obs, subobs, cen):
+        dset = data[system][obs][subobs][cen]
         yerr = dset['yerr']
 
         try:
@@ -364,13 +346,14 @@ def cov(
             stat = dset['y'] * stat_frac
             sys = yerr['sum']
 
-        return dset['x'], stat, sys
+        return dset['x'], dset['y'], stat, sys
 
-    x1, stat1, sys1 = unpack(obs1, subobs1)
-    x2, stat2, sys2 = unpack(obs2, subobs2)
+    x1, y1, stat1, sys1 = unpack(system1, obs1, specie1, cen1)
+    x2, y2, stat2, sys2 = unpack(system2, obs2, specie2, cen2)
 
     if obs1 == obs2:
-        same_obs = (subobs1 == subobs2)
+        same_obs = (system1==system2) and (specie1 == specie2) \
+                                      and (cen1 == cen2)
     else:
         # check if obs are both in a correlated group
         if any({obs1, obs2} <= c for c in corr_obs):
@@ -390,7 +373,8 @@ def cov(
     else:
         # reduce correlation for different observables
         C *= cross_factor
-
+    if norm_by_y:
+        C /= np.abs(np.outer(y1, y2))
     return C
 
 
@@ -407,7 +391,7 @@ def print_data(d, indent=0):
             print(k)
             print_data(v, indent + 1)
         else:
-            if k.endswith('cent'):
+            if k.endswith('pT'):
                 v = ' '.join(
                     str(tuple(int(j) if j.is_integer() else j for j in i))
                     for i in v
@@ -416,6 +400,37 @@ def print_data(d, indent=0):
                 v = str(v).replace('\n', '')
             print(k, '=', v)
 
+def plot_data(d, indent=0):
+    """
+    Ugly plot of the data
+    """
+    import matplotlib.pyplot as plt
+    for k in sorted(d):
+        v = d[k]
+        for a in v:
+            print(a)
+            for b in v[a]:
+                print(b)
+                for c in v[a][b]:
+                    print(c)
+                    iv = v[a][b][c]
+                    plt.errorbar(iv['x'], iv['y'], yerr=iv['yerr']['stat'], 
+                                 label="{}/{}/{}/{}".format(k,a,b,c))
+        
+                plt.legend(framealpha=0)
+                plt.show()
+
+def test_cov():
+    covm = cov(
+        'PbPb5020', 'V2', 'D0', '0-10', 'PbPb5020', 'V2', 'D0', '0-10',
+        stat_frac=1e-2, sys_corr_length=100, cross_factor=.5, norm_by_y=False)
+    import matplotlib.pyplot as plt
+    plt.imshow(np.flipud(covm.T))
+    plt.colorbar()
+    plt.show()
 
 if __name__ == '__main__':
     print_data(data)
+    #plot_data(data)
+    #test_cov()
+

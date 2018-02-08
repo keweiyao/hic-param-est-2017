@@ -25,7 +25,8 @@ from sklearn.preprocessing import StandardScaler
 
 from . import cachedir, lazydict, model
 from .design import Design
-
+from . import expt
+from . import nPDFs
 
 class _Covariance:
     """
@@ -38,11 +39,11 @@ class _Covariance:
         self._slices = slices
 
     def __getitem__(self, key):
-        (obs1, subobs1), (obs2, subobs2) = key
+        (obs1, specie1, cent1), (obs2, specie2, cent2) = key
         return self.array[
             ...,
-            self._slices[obs1][subobs1],
-            self._slices[obs2][subobs2]
+            self._slices[obs1][specie1][cent1],
+            self._slices[obs2][specie2][cent2]
         ]
 
 
@@ -67,18 +68,14 @@ class Emulator:
     #: Observables to emulate as a list of 2-tuples
     #: ``(obs, [list of subobs])``.
     observables = [
-        ('dNch_deta', [None]),
-        ('dET_deta', [None]),
-        ('dN_dy', ['pion', 'kaon', 'proton']),
-        ('mean_pT', ['pion', 'kaon', 'proton']),
-        ('pT_fluct', [None]),
-        ('vnk', [(2, 2), (3, 2), (4, 2)]),
+        ('RAA', 'D0', ['0-10', '0-100']),
+        ('V2', 'D0', ['0-10', '10-30', '30-50']),
     ]
 
-    def __init__(self, system, npc=10, nrestarts=0):
+    def __init__(self, system, nPDF, npc=10, nrestarts=0):
         logging.info(
-            'training emulator for system %s (%d PC, %d restarts)',
-            system, npc, nrestarts
+            'training emulator for system %s nPDF %s (%d PC, %d restarts)',
+            system, nPDF, npc, nrestarts
         )
 
         Y = []
@@ -86,12 +83,12 @@ class Emulator:
 
         # Build an array of all observables to emulate.
         nobs = 0
-        for obs, subobslist in self.observables:
-            self._slices[obs] = {}
-            for subobs in subobslist:
-                Y.append(model.data[system][obs][subobs]['Y'])
+        for obs, specie, cenlist in self.observables:
+            self._slices[obs] = {specie: {} }
+            for cen in cenlist:
+                Y.append(model.data[system][nPDF][obs][specie][cen]['Y'])
                 n = Y[-1].shape[1]
-                self._slices[obs][subobs] = slice(nobs, nobs + n)
+                self._slices[obs][specie][cen] = slice(nobs, nobs + n)
                 nobs += n
 
         Y = np.concatenate(Y, axis=1)
@@ -109,14 +106,15 @@ class Emulator:
         # Gaussian correlation (RBF) plus a noise term.
         design = Design(system)
         ptp = design.max - design.min
+        print(ptp)
         kernel = (
             1. * kernels.RBF(
                 length_scale=ptp,
-                length_scale_bounds=np.outer(ptp, (.1, 10))
+                length_scale_bounds=np.outer(ptp, (1e-1, 1e3))
             ) +
             kernels.WhiteKernel(
                 noise_level=.1**2,
-                noise_level_bounds=(.01**2, 1)
+                noise_level_bounds=(1e-3, 1e2)
             )
         )
 
@@ -165,24 +163,25 @@ class Emulator:
         self._cov_trunc.flat[::nobs + 1] += 1e-4 * self.scaler.var_
 
     @classmethod
-    def from_cache(cls, system, retrain=False, **kwargs):
+    def from_cache(cls, system, nPDF, retrain=False, **kwargs):
         """
         Load the emulator for `system` from the cache if available, otherwise
         train and cache a new instance.
 
         """
-        cachefile = cachedir / 'emulator' / '{}.pkl'.format(system)
+        cachefile = cachedir / 'emulator' / '{}-{}.pkl'.format(system, nPDF)
 
         # cache the __dict__ rather than the Emulator instance itself
         # this way the __name__ doesn't matter, e.g. a pickled
         # __main__.Emulator can be unpickled as a src.emulator.Emulator
         if not retrain and cachefile.exists():
-            logging.debug('loading emulator for system %s from cache', system)
+            logging.debug('loading emulator for system %s with nPDF %s from cache', 
+                               system, nPDF)
             emu = cls.__new__(cls)
             emu.__dict__ = joblib.load(cachefile)
             return emu
 
-        emu = cls(system, **kwargs)
+        emu = cls(system, nPDF, **kwargs)
 
         logging.info('writing cache file %s', cachefile)
         cachefile.parent.mkdir(exist_ok=True)
@@ -201,13 +200,14 @@ class Emulator:
         # Y shape (..., nobs)
         Y = np.dot(Z, self._trans_matrix[:Z.shape[-1]])
         Y += self.scaler.mean_
-
-        return {
-            obs: {
-                subobs: Y[..., s]
-                for subobs, s in slices.items()
-            } for obs, slices in self._slices.items()
-        }
+        res = {}
+        for obs, s2 in self._slices.items():
+            res[obs] = {}
+            for specie, s1 in s2.items():
+                res[obs][specie] = {}
+                for cent, s in s1.items():
+                    res[obs][specie][cent] = Y[..., s]
+        return res
 
     def predict(self, X, return_cov=False, extra_std=0):
         """
@@ -302,15 +302,20 @@ class Emulator:
         )
 
 
-emulators = lazydict(Emulator.from_cache)
+emulators = {nPDF: lazydict(Emulator.from_cache, nPDF) for nPDF in nPDFs}
 
 
 if __name__ == '__main__':
     import argparse
-    from . import systems
+    from . import systems, nPDFs
 
     def arg_to_system(arg):
         if arg not in systems:
+            raise argparse.ArgumentTypeError(arg)
+        return arg
+
+    def arg_to_nPDF(arg):
+        if arg not in nPDFs:
             raise argparse.ArgumentTypeError(arg)
         return arg
 
@@ -338,22 +343,29 @@ if __name__ == '__main__':
         help='system(s) to train'
     )
 
+    parser.add_argument(
+        'nPDFs', nargs='*', type=arg_to_nPDF,
+        default=nPDFs, metavar='NPDF',
+        help='nPDF(s) to use'
+    )
+
     args = parser.parse_args()
     kwargs = vars(args)
 
     for s in kwargs.pop('systems'):
-        emu = Emulator.from_cache(s, **kwargs)
+        for nPDF in kwargs.pop('nPDFs'):
+            emu = Emulator.from_cache(s, nPDF, **kwargs)
 
-        print(s)
-        print('{} PCs explain {:.5f} of variance'.format(
-            emu.npc,
-            emu.pca.explained_variance_ratio_[:emu.npc].sum()
-        ))
+            print(s, ' ', nPDF)
+            print('{} PCs explain {:.5f} of variance'.format(
+                emu.npc,
+                emu.pca.explained_variance_ratio_[:emu.npc].sum()
+            ))
 
-        for n, (evr, gp) in enumerate(zip(
-                emu.pca.explained_variance_ratio_, emu.gps
-        )):
-            print(
-                'GP {}: {:.5f} of variance, LML = {:.5g}, kernel: {}'
-                .format(n, evr, gp.log_marginal_likelihood_value_, gp.kernel_)
-            )
+            for n, (evr, gp) in enumerate(zip(
+                    emu.pca.explained_variance_ratio_, emu.gps
+            )):
+                print(
+                    'GP {}: {:.5f} of variance, LML = {:.5g}, kernel: {}'
+                    .format(n, evr, gp.log_marginal_likelihood_value_, gp.kernel_)
+                )

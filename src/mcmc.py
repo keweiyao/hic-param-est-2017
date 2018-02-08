@@ -29,6 +29,7 @@ from contextlib import contextmanager
 import logging
 
 import emcee
+#from emcee.utils import MPIPool
 import h5py
 import numpy as np
 from scipy.linalg import lapack
@@ -124,33 +125,21 @@ class Chain:
     #: Each observable is checked for each system
     #: and silently ignored if not found
     observables = [
-        ('dNch_deta', [None]),
-        ('dET_deta', [None]),
-        ('dN_dy', ['pion', 'kaon', 'proton']),
-        ('mean_pT', ['pion', 'kaon', 'proton']),
-        ('pT_fluct', [None]),
-        ('vnk', [(2, 2), (3, 2), (4, 2)]),
+        ('RAA', 'D0', ['0-10', '0-100']),
+        ('V2', 'D0', ['0-10', '10-30', '30-50']),
     ]
 
-    def __init__(self, path=workdir / 'mcmc' / 'chain.hdf'):
+    def __init__(self, path=workdir / 'mcmc' / 'chain.hdf', nPDF='nCTEQ'):
         self.path = path
         self.path.parent.mkdir(exist_ok=True)
-
+        self.nPDF = nPDF
+        print("Using "+nPDF)
         # parameter order:
-        #  - normalizations (one for each system)
         #  - all other physical parameters (same for all systems)
         #  - model sys error
         def keys_labels_range():
-            for sys in systems:
-                d = Design(sys)
-                klr = zip(d.keys, d.labels, d.range)
-                k, l, r = next(klr)
-                assert k == 'norm'
-                yield (
-                    '{} {}'.format(k, sys),
-                    '{}\n{:.2f} TeV'.format(l, d.beam_energy/1000),
-                    r
-                )
+            d = Design(systems[0])
+            klr = zip(d.keys, [l[1:-1] for l in d.labels], d.range)
 
             yield from klr
 
@@ -175,32 +164,33 @@ class Chain:
 
             self._slices[sys] = []
 
-            for obs, subobslist in self.observables:
+            for obs, specie, cenlist in self.observables:
                 try:
-                    obsdata = sysdata[obs]
+                    obsdata = sysdata[obs][specie]
                 except KeyError:
                     continue
 
-                for subobs in subobslist:
+                for cen in cenlist:
                     try:
-                        dset = obsdata[subobs]
+                        dset = obsdata[cen]
                     except KeyError:
                         continue
 
                     n = dset['y'].size
                     self._slices[sys].append(
-                        (obs, subobs, slice(nobs, nobs + n))
+                        (obs, specie, cen, slice(nobs, nobs + n))
                     )
                     nobs += n
 
             self._expt_y[sys] = np.empty(nobs)
             self._expt_cov[sys] = np.empty((nobs, nobs))
 
-            for obs1, subobs1, slc1 in self._slices[sys]:
-                self._expt_y[sys][slc1] = expt.data[sys][obs1][subobs1]['y']
-                for obs2, subobs2, slc2 in self._slices[sys]:
+            for obs1, specie1, cen1, slc1 in self._slices[sys]:
+                self._expt_y[sys][slc1] = expt.data[sys][obs1][specie1][cen1]['y']
+                for obs2, specie2, cen2, slc2 in self._slices[sys]:
                     self._expt_cov[sys][slc1, slc2] = expt.cov(
-                        sys, obs1, subobs1, obs2, subobs2
+                        sys, obs1, specie1, cen1, 
+                        sys, obs2, specie2, cen2
                     )
 
     def _predict(self, X, **kwargs):
@@ -209,7 +199,7 @@ class Chain:
 
         """
         return {
-            sys: emulators[sys].predict(
+            sys: emulators[self.nPDF][sys].predict(
                 X[:, [n] + self._common_indices],
                 **kwargs
             )
@@ -250,11 +240,11 @@ class Chain:
                 model_Y, model_cov = pred[sys]
 
                 # copy predictive mean and covariance into allocated arrays
-                for obs1, subobs1, slc1 in self._slices[sys]:
-                    dY[:, slc1] = model_Y[obs1][subobs1]
-                    for obs2, subobs2, slc2 in self._slices[sys]:
+                for obs1, specie1, cen1, slc1 in self._slices[sys]:
+                    dY[:, slc1] = model_Y[obs1][specie1][cen1]
+                    for obs2, specie2, cen2, slc2 in self._slices[sys]:
                         cov[:, slc1, slc2] = \
-                            model_cov[(obs1, subobs1), (obs2, subobs2)]
+                            model_cov[(obs1, specie1, cen1), (obs2, specie2, cen2)]
 
                 # subtract expt data from model data
                 dY -= self._expt_y[sys]
@@ -286,7 +276,8 @@ class Chain:
         """
         return f(args)
 
-    def run_mcmc(self, nsteps, nburnsteps=None, nwalkers=None, status=None):
+    def run_mcmc(self, nsteps, nburnsteps=None, nwalkers=None, status=None, nPDF=None):
+
         """
         Run MCMC model calibration.  If the chain already exists, continue from
         the last point, otherwise burn-in and start the chain.
@@ -294,7 +285,7 @@ class Chain:
         """
         with self.open('a') as f:
             try:
-                dset = f['chain']
+                dset = f['chain/'+self.nPDF]
             except KeyError:
                 burn = True
                 if nburnsteps is None or nwalkers is None:
@@ -303,7 +294,7 @@ class Chain:
                     )
                     return
                 dset = f.create_dataset(
-                    'chain', dtype='f8',
+                    'chain/'+self.nPDF, dtype='f8',
                     shape=(nwalkers, 0, self.ndim),
                     chunks=(nwalkers, 1, self.ndim),
                     maxshape=(nwalkers, None, self.ndim),
@@ -314,7 +305,7 @@ class Chain:
                 nwalkers = dset.shape[0]
 
             sampler = LoggingEnsembleSampler(
-                nwalkers, self.ndim, self.log_posterior, pool=self
+                nwalkers, self.ndim, self.log_posterior, pool=self,
             )
 
             if burn:
@@ -352,6 +343,7 @@ class Chain:
 
             sampler.run_mcmc(X0, nsteps, status=status)
 
+            #pool.close()
             logging.info('writing chain to file')
             dset.resize(dset.shape[1] + nsteps, 1)
             dset[:, -nsteps:, :] = sampler.chain
@@ -373,7 +365,7 @@ class Chain:
 
         """
         with self.open(mode) as f:
-            yield f[name]
+            yield f[name+'/'+self.nPDF]
 
     def load(self, *keys, thin=1):
         """
@@ -447,8 +439,13 @@ def main():
         '--status', type=int,
         help='number of steps between logging status'
     )
-
-    Chain().run_mcmc(**vars(parser.parse_args()))
+    parser.add_argument(
+        '--nPDF', type=str,
+        help='Study which nPDF'
+    )
+    print(vars(parser.parse_args()).get('nPDF'))
+    chain = Chain(nPDF=vars(parser.parse_args()).get('nPDF'))
+    chain.run_mcmc(**vars(parser.parse_args()))
 
 
 if __name__ == '__main__':

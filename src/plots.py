@@ -41,6 +41,7 @@ from sklearn.mixture import GaussianMixture
 from . import workdir, systems, parse_system, expt, model, mcmc
 from .design import Design
 from .emulator import emulators
+from matplotlib.gridspec import GridSpec
 
 
 fontsmall, fontnormal, fontlarge = 5, 6, 7
@@ -195,42 +196,33 @@ def darken(rgb, amount=.5):
     return hsluv.hsluv_to_rgb((h, s, (1 - amount)*l))
 
 
-def obs_color_hsluv(obs, subobs):
+def obs_color_hsluv(obs, nPDF):
     """
     Return a nice color for the given observable in HSLuv space.
     Use obs_color() to obtain an RGB color.
 
     """
-    if obs in {'dNch_deta', 'pT_fluct'}:
-        return 250, 90, 55
+    if obs == 'RAA':
+        if nPDF == 'EPS09':
+            return 250, 90, 55
+        else:
+            return 250, 90, 55
 
-    if obs == 'dET_deta':
-        return 10, 65, 55
-
-    if obs in {'dN_dy', 'mean_pT'}:
-        return dict(
-            pion=(210, 85, 70),
-            kaon=(130, 88, 68),
-            proton=(30, 90, 62),
-        )[subobs]
-
-    if obs == 'vnk':
-        return {
-            (2, 2): (230, 90, 65),
-            (2, 4): (262, 80, 63),
-            (3, 2): (150, 90, 67),
-            (4, 2): (310, 70, 50),
-        }[subobs]
+    if obs == 'V2':
+        if nPDF == 'EPS09':
+            return 130, 90, 55
+        else:
+            return 130, 90, 55
 
     raise ValueError('unknown observable: {} {}'.format(obs, subobs))
 
 
-def obs_color(obs, subobs):
+def obs_color(obs, nPDF):
     """
     Return a nice color for the given observable.
 
     """
-    return hsluv.hsluv_to_rgb(obs_color_hsluv(obs, subobs))
+    return hsluv.hsluv_to_rgb(obs_color_hsluv(obs, nPDF))
 
 
 def _observables_plots():
@@ -238,155 +230,173 @@ def _observables_plots():
     Metadata for observables plots.
 
     """
-    def id_parts_plots(obs):
-        return [(obs, species, dict(label=label)) for species, label in [
-            ('pion', '$\pi$'), ('kaon', '$K$'), ('proton', '$p$')
-        ]]
 
     return [
         dict(
-            title='Yields',
+            title='RAA',
             ylabel=(
-                r'$dN_\mathrm{ch}/d\eta,\ dN/dy,\ dE_T/d\eta\ [\mathrm{GeV}]$'
+                r'$R_{AA}$'
             ),
-            ylim=(1, 1e5),
-            yscale='log',
-            height_ratio=1.5,
+            xscale='log',
+            xlim=(1, 150),
+            ylim=(0, 1),
+            height_ratio=1.0,
             subplots=[
-                ('dNch_deta', None, dict(label=r'$N_\mathrm{ch}$', scale=25)),
-                ('dET_deta', None, dict(label=r'$E_T$', scale=5)),
-                *id_parts_plots('dN_dy')
+                ('RAA', 'D0', '0-10', dict(label=r'$0-10(\%)$', scale=1)),
+                ('RAA', 'D0', '0-100', dict(label=r'$0-100(\%)$', scale=1)),
             ]
         ),
         dict(
-            title='Mean $p_T$',
-            ylabel=r'$\langle p_T \rangle$ [GeV]',
-            ylim=(0, 1.7),
-            subplots=id_parts_plots('mean_pT')
-        ),
-        dict(
-            title='Mean $p_T$ fluctuations',
-            ylabel=r'$\delta p_T/\langle p_T \rangle$',
-            ylim=(0, .04),
-            subplots=[('pT_fluct', None, dict())]
-        ),
-        dict(
-            title='Flow cumulants',
-            ylabel=r'$v_n\{2\}$',
-            ylim=(0, .12),
+            title='V2',
+            ylabel=(
+                r'$v_{2}\{2\}$'
+            ),
+            xscale='log',
+            xlim=(1,80),
+            ylim=(-0.05, 0.3),
+            height_ratio=1.0,
             subplots=[
-                ('vnk', (n, 2), dict(label='$v_{}$'.format(n)))
-                for n in [2, 3, 4]
+                ('V2', 'D0', '0-10', dict(label=r'$0-10(\%)$', scale=1)),
+                ('V2', 'D0', '10-30', dict(label=r'$10-30(\%)$', scale=1)),
+                ('V2', 'D0', '30-50', dict(label=r'$30-50(\%)$', scale=1))
             ]
         )
     ]
 
 
-def _observables(posterior=False):
+def _observables(posterior=False, nPDF=None):
     """
     Model observables at all design points or drawn from the posterior with
     experimental data points.
 
     """
     plots = _observables_plots()
-
-    fig, axes = plt.subplots(
-        nrows=len(plots), ncols=len(systems),
-        figsize=(.8*fullwidth, fullwidth),
-        gridspec_kw=dict(
-            height_ratios=[p.get('height_ratio', 1) for p in plots]
-        )
-    )
+    nrows = len(plots)
+    ncols = [len(item['subplots']) for item in plots]
 
     if posterior:
-        samples = mcmc.Chain().samples(100)
+        samples = mcmc.Chain(nPDF=nPDF).samples(100)
+    fig = plt.figure(figsize=(fullwidth, 0.7*fullwidth))
 
-    for (plot, system), ax in zip(
-            itertools.product(plots, systems), axes.flat
-    ):
-        for obs, subobs, opts in plot['subplots']:
-            color = obs_color(obs, subobs)
+    gs = GridSpec(2, 6)
+    ax1 = plt.subplot(gs[0, :3])
+    ax2 = plt.subplot(gs[0, 3:])
+    ax3 = plt.subplot(gs[1, :2])
+    ax4 = plt.subplot(gs[1, 2:4])
+    ax5 = plt.subplot(gs[1, 4:])
+    system = 'PbPb5020'
+    for plot, rowax in zip(plots, [[ax1, ax2], [ax3,ax4,ax5]]):
+        for (obs, specie, cen, opts), ax in zip(plot['subplots'], rowax):
             scale = opts.get('scale')
 
-            x = model.data[system][obs][subobs]['x']
-            Y = (
-                samples[system][obs][subobs]
-                if posterior else
-                model.data[system][obs][subobs]['Y']
-            )
+            color = obs_color(obs, nPDF)
+            x = model.data[system][nPDF][obs][specie][cen]['x']
+            Y = samples[system][obs][specie][cen] if posterior else model.data[system][nPDF][obs][specie][cen]['Y']
 
             if scale is not None:
                 Y = Y*scale
 
             for y in Y:
-                ax.plot(x, y, color=color, alpha=.08, lw=.3)
-
-            if 'label' in opts:
-                ax.text(
-                    x[-1] + 3,
-                    np.median(Y[:, -1]),
-                    opts['label'],
-                    color=darken(color), ha='left', va='center'
-                )
+                ax.plot(x, y, color=color, alpha=.2, lw=.3,)
 
             try:
-                dset = expt.data[system][obs][subobs]
+                dset = expt.data[system][obs][specie][cen]
             except KeyError:
                 continue
 
             x = dset['x']
             y = dset['y']
+            xerr = [(ph-pl)/2. for (pl, ph) in dset['pT']]
             yerr = np.sqrt(sum(
                 e**2 for e in dset['yerr'].values()
             ))
 
+            ax.set_xlim(plot['xlim'])
+            if 'label' in opts:
+                ax.text(
+                    x[-1]*0.8,
+                    (y[-1]+yerr[-1]*1.5),
+                    opts['label'],
+                    color=darken(color), ha='left', va='center'
+                )
             if scale is not None:
                 y = y*scale
                 yerr = yerr*scale
 
             ax.errorbar(
-                x, y, yerr=yerr, fmt='o', ms=1.7,
+                x, y, xerr=xerr, yerr=yerr, fmt='D', ms=1.7,
                 capsize=0, color='.25', zorder=1000
             )
 
-        if plot.get('yscale') == 'log':
-            ax.set_yscale('log')
-            ax.minorticks_off()
-        else:
-            auto_ticks(ax, 'y', nbins=4, minor=2)
+            if plot.get('yscale') == 'log':
+                ax.set_yscale('log')
+                ax.minorticks_off()
+            else:
+                auto_ticks(ax, 'y', nbins=4, minor=2)
+           
+            if plot.get('xscale') == 'log':
+                ax.set_xscale('log')
+                ax.minorticks_off()
+            else:
+                auto_ticks(ax, 'x', nbins=5, minor=2)
 
-        ax.set_xlim(0, 80)
-        auto_ticks(ax, 'x', nbins=5, minor=2)
+            ax.set_ylim(plot['ylim'])
 
-        ax.set_ylim(plot['ylim'])
+            if ax.is_first_row():
+                ax.set_title(format_system(system))
+            elif ax.is_last_row():
+                ax.set_xlabel(r'$p_T$ [GeV]')
 
-        if ax.is_first_row():
-            ax.set_title(format_system(system))
-        elif ax.is_last_row():
-            ax.set_xlabel('Centrality %')
+            if ax.is_first_col():
+                ax.set_ylabel(plot['ylabel'])
 
-        if ax.is_first_col():
-            ax.set_ylabel(plot['ylabel'])
-
-        if ax.is_last_col():
-            ax.text(
-                1.02, .5, plot['title'],
-                transform=ax.transAxes, ha='left', va='center',
-                size=plt.rcParams['axes.labelsize'], rotation=-90
-            )
+            if ax.is_last_col():
+                ax.text(
+                    1.02, .5, plot['title'],
+                    transform=ax.transAxes, ha='left', va='center',
+                    size=plt.rcParams['axes.labelsize'], rotation=-90
+                )
 
     set_tight(fig, rect=[0, 0, .97, 1])
 
+@plot
+def qhat_diff():
+        #from mpl_toolkits.mplot3d import Axes3D
+    d = Design('PbPb5020')
+    keys = ('qhat_A', 'qhat_B')
+    indices = tuple(d.keys.index(k) for k in keys)
+
+    X, Y = (d.array[:, i] for i in indices)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for x, y in zip(X, Y):
+        T = 0.3
+        for M, color in zip([1.3, 4.5], ['r', 'b']):
+            E = M*np.linspace(1,10,100)
+            D2piT = 8*np.pi/(x+y/E/T)
+            v = np.sqrt(E**2-M**2)/E
+            ax.plot(v, D2piT, color=color, alpha=0.5)
+
+    ax.set_xlabel(r'$E$ [GeV]')
+    #ax.set_ylabel(r'$T$ [GeV]')
+    ax.set_ylabel(r'$2\pi T D$')
+    set_tight(fig, rect=[0, 0, .97, 1])
 
 @plot
-def observables_design():
-    _observables(posterior=False)
-
+def observables_design_EPS09():
+    _observables(posterior=False, nPDF='EPS09')
 
 @plot
-def observables_posterior():
-    _observables(posterior=True)
+def observables_design_nCTEQ():
+    _observables(posterior=False, nPDF='nCTEQ')
 
+@plot
+def observables_posterior_EPS09():
+    _observables(posterior=True,  nPDF='EPS09')
+
+@plot
+def observables_posterior_nCTEQ():
+    _observables(posterior=True,  nPDF='nCTEQ')
 
 @plot
 def observables_map():
@@ -495,21 +505,21 @@ def observables_map():
             )
 
             ratio_ax.plot(x, y/yexp, color=color, ls=linestyle)
-
+            ax.set_xlim(plot['xlim'])
+            ax.set_ylim(plot['ylim'])
         if plot.get('yscale') == 'log':
             ax.set_yscale('log')
             ax.minorticks_off()
         else:
             auto_ticks(ax, 'y', nbins=4, minor=2)
 
-        for a in [ax, ratio_ax]:
-            a.set_xlim(0, 80)
+        for a in [ax, ratio_ax]:    
             auto_ticks(a, 'x', nbins=5, minor=2)
 
         if ratio_ax.is_last_row():
             ratio_ax.set_xlabel('Centrality %')
 
-        ax.set_ylim(plot['ylim'])
+        
         ax.set_ylabel(plot['ylabel'])
 
         if plot.get('legend'):
@@ -721,34 +731,44 @@ def format_ci(samples, ci=.9):
 def _posterior(
         params=None, ignore=None,
         scale=1, padr=.99, padt=.98,
-        cmap=None
+        cmap=None, nPDFs=None
 ):
     """
     Triangle plot of posterior marginal and joint distributions.
 
     """
-    chain = mcmc.Chain()
-
+    chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
+    
     if params is None and ignore is None:
-        params = set(chain.keys)
+        params = set(chain[nPDFs[0]].keys)
     elif params is not None:
         params = set(params)
     elif ignore is not None:
-        params = set(chain.keys) - set(ignore)
+        params = set(chain[nPDFs[0]].keys) - set(ignore)
 
     keys, labels, ranges = map(list, zip(*(
-        i for i in zip(chain.keys, chain.labels, chain.range)
+        i for i in zip(chain[nPDFs[0]].keys, 
+                       chain[nPDFs[0]].labels, chain[nPDFs[0]].range)
         if i[0] in params
     )))
+    print(keys)
     ndim = len(params)
 
-    data = chain.load(*keys).T
+    data = {nPDF: chain[nPDF].load(*keys).T for nPDF in nPDFs}
+    if 'log_scale' in keys:
+        for nPDF in nPDFs:
+            data[nPDF][keys.index('log_scale')] = \
+                            np.exp(data[nPDF][keys.index('log_scale')])
+        ranges[keys.index('log_scale')] = np.exp(ranges[keys.index('log_scale')])
+        labels[keys.index('log_scale')] = '$\mu$'
+    cmap1 = plt.get_cmap('Reds')
+    cmap1.set_bad('white')
+    cmap2 = plt.get_cmap('Blues')
+    cmap2.set_bad('white')
+    cmaps = [cmap1, cmap2]
 
-    cmap = plt.get_cmap(cmap)
-    cmap.set_bad('white')
-
-    line_color = cmap(.8)
-    fill_color = cmap(.5, alpha=.1)
+    line_colors = [cmap(.8) for cmap in cmaps]
+    fill_colors = [cmap(.5, alpha=.1) for cmap in cmaps]
 
     fig, axes = plt.subplots(
         nrows=ndim, ncols=ndim,
@@ -756,65 +776,72 @@ def _posterior(
         figsize=2*(scale*fullheight,)
     )
 
-    for samples, key, lim, ax in zip(data, keys, ranges, axes.diagonal()):
-        counts, edges = np.histogram(samples, bins=50, range=lim)
-        x = (edges[1:] + edges[:-1]) / 2
-        y = .85 * (lim[1] - lim[0]) * counts / counts.max() + lim[0]
-        # smooth histogram with monotonic cubic interpolation
-        interp = PchipInterpolator(x, y)
-        x = np.linspace(x[0], x[-1], 10*x.size)
-        y = interp(x)
-        ax.plot(x, y, lw=.5, color=line_color)
-        ax.fill_between(x, lim[0], y, color=fill_color, zorder=-10)
+    for samples1, samples2, key, lim, ax in \
+        zip(data['EPS09'], data['nCTEQ'], keys, ranges, axes.diagonal()):
+        
+        for samples, line_color, fill_color in \
+            zip([samples1, samples2], line_colors, fill_colors):
+
+            counts, edges = np.histogram(samples, bins=50, range=lim)
+            x = (edges[1:] + edges[:-1]) / 2
+            y = .85 * (lim[1] - lim[0]) * counts / counts.max() + lim[0]
+            # smooth histogram with monotonic cubic interpolation
+            interp = PchipInterpolator(x, y)
+            x = np.linspace(x[0], x[-1], 10*x.size)
+            y = interp(x)
+            ax.plot(x, y, lw=1., color=line_color)
+            ax.fill_between(x, lim[0], y, color=fill_color, zorder=-10)
 
         ax.set_xlim(lim)
         ax.set_ylim(lim)
 
-        if key == 'dmin3':
-            samples = samples**(1/3)
-
         ax.annotate(
-            format_ci(samples), (.62, .92), xycoords='axes fraction',
-            ha='center', va='bottom', fontsize=4.5
+            format_ci(samples1), (.72, .86), xycoords='axes fraction',
+            ha='center', va='bottom', fontsize=8, color=line_colors[0]
+        )
+        ax.annotate(
+            format_ci(samples2), (.32, .86), xycoords='axes fraction',
+            ha='center', va='bottom', fontsize=8, color=line_colors[1]
         )
 
     for ny, nx in zip(*np.tril_indices_from(axes, k=-1)):
         axes[ny][nx].hist2d(
-            data[nx], data[ny], bins=100,
+            data['EPS09'][nx], data['EPS09'][ny], bins=100,
             range=(ranges[nx], ranges[ny]),
-            cmap=cmap, cmin=1
+            cmap=cmap1, cmin=1
         )
-        axes[nx][ny].set_axis_off()
+        axes[nx][ny].hist2d(
+            data['nCTEQ'][ny], data['nCTEQ'][nx], bins=100,
+            range=(ranges[ny], ranges[nx]),
+            cmap=cmap2, cmin=1
+        )
+        #axes[nx][ny].set_axis_off()
 
     for key, label, axb, axl in zip(keys, labels, axes[-1], axes[:, 0]):
         for axis in [axb.xaxis, axl.yaxis]:
-            axis.set_label_text(label.replace(r'\ [', '$\n$['), fontsize=4)
-            axis.set_tick_params(labelsize=3)
-            if key == 'dmin3':
-                ticks = [0., 1.2, 1.5, 1.7]
-                axis.set_ticklabels(list(map(str, ticks)))
-                axis.set_ticks([t**3 for t in ticks])
-            else:
-                axis.set_major_locator(ticker.LinearLocator(3))
-                if (
-                        axis.axis_name == 'x'
-                        and scale / ndim < .13
-                        and any(len(str(x)) > 4 for x in axis.get_ticklocs())
-                ):
-                    for t in axis.get_ticklabels():
-                        t.set_rotation(30)
+            axis.set_label_text(label, fontsize=10)
+            axis.set_tick_params(labelsize=6)
+            axis.set_major_locator(ticker.LinearLocator(3))
+            if (
+                    axis.axis_name == 'x'
+                    and scale / ndim < .13
+                    and any(len(str(x)) > 4 for x in axis.get_ticklocs())
+            ):
+                for t in axis.get_ticklabels():
+                    t.set_rotation(30)
 
         axb.get_xticklabels()[0].set_horizontalalignment('left')
         axb.get_xticklabels()[-1].set_horizontalalignment('right')
         axl.get_yticklabels()[0].set_verticalalignment('bottom')
         axl.get_yticklabels()[-1].set_verticalalignment('top')
 
+
     set_tight(fig, pad=.05, h_pad=.1, w_pad=.1, rect=[0., 0., padr, padt])
 
 
 @plot
 def posterior():
-    _posterior(ignore={'etas_hrg'}, scale=1.6, padr=1., padt=.99)
+    _posterior(scale=1.6, padr=1., padt=.99, nPDFs=['EPS09', 'nCTEQ'])
 
 
 @plot
@@ -1254,7 +1281,7 @@ def design():
 
     """
     fig = plt.figure(figsize=(.5*textwidth, .5*textwidth))
-    ratio = 5
+    ratio = 10
     gs = plt.GridSpec(ratio + 1, ratio + 1)
 
     ax_j = fig.add_subplot(gs[1:, :-1])
@@ -1263,7 +1290,7 @@ def design():
 
     d = Design(systems[0])
 
-    keys = ('etas_min', 'etas_slope')
+    keys = ('log_scale', 'qhat_A')
     indices = tuple(d.keys.index(k) for k in keys)
 
     x, y = (d.array[:, i] for i in indices)
@@ -1272,7 +1299,7 @@ def design():
     hist_kw = dict(bins=30, color=plt.cm.Blues(0.4), edgecolor='white', lw=.5)
     ax_x.hist(x, **hist_kw)
     ax_y.hist(y, orientation='horizontal', **hist_kw)
-
+    
     for ax in fig.axes:
         ax.tick_params(top='off', right='off')
         spines = ['top', 'right']
@@ -1291,9 +1318,12 @@ def design():
         ax.tick_params(labelbottom='off', labelleft='off')
 
     for i, xy in zip(indices, 'xy'):
-        for f, l in [('lim', d.range), ('label', d.labels)]:
-            getattr(ax_j, 'set_{}{}'.format(xy, f))(l[i])
-
+        for f, l in [('lim', d.range), ('label', [a[1:-1] for a in d.labels])]:
+            attr = 'set_{}{}'.format(xy, f)
+            arg = l[i]
+            print(attr, l, l[i])
+            getattr(ax_j, attr)(arg)
+    
 
 @plot
 def gp():
@@ -1461,7 +1491,7 @@ def trento_events():
 
         with h5py.File(t.name, 'r') as f:
             for dset, ax in zip(f.values(), axes):
-                ax.pcolorfast(xyr, xyr, np.array(dset), cmap=plt.cm.Blues)
+                ax.pcolorfast(xyr, xyr, np.array(dset['matter_density']), cmap=plt.cm.Blues)
                 ax.set_aspect('equal')
                 for xy in ['x', 'y']:
                     getattr(ax, 'set_{}ticks'.format(xy))([-5, 0, 5])
@@ -1714,16 +1744,16 @@ def validation_example(
     )
 
 
-default_system = 'PbPb2760'
-
+default_system = 'PbPb5020'
+default_nPDF = 'nCTEQ'
 
 @plot
-def diag_pca(system=default_system):
+def diag_pca(system=default_system, nPDF=default_nPDF):
     """
     Diagnostic: histograms of principal components and scatterplots of pairs.
 
     """
-    Y = [g.y_train_ for g in emulators[system].gps]
+    Y = [g.y_train_ for g in emulators[nPDF][system].gps]
     n = len(Y)
     ymax = np.ceil(max(np.fabs(y).max() for y in Y))
     lim = (-ymax, ymax)
@@ -1748,13 +1778,13 @@ def diag_pca(system=default_system):
 
 
 @plot
-def diag_emu(system=default_system):
+def diag_emu(system=default_system, nPDF=default_nPDF):
     """
     Diagnostic: plots of each principal component vs each input parameter,
     overlaid by emulator predictions at several points in design space.
 
     """
-    gps = emulators[system].gps
+    gps = emulators[nPDF][system].gps
     nrows = len(gps)
     ncols = gps[0].X_train_.shape[1]
 
@@ -1773,7 +1803,7 @@ def diag_emu(system=default_system):
         y = gp.y_train_
 
         for nx, (x, label, xlim, ax) in enumerate(zip(
-                gp.X_train_.T, design.labels, design.range, row
+                gp.X_train_.T, [l[1:-1] for l in design.labels], design.range, row
         )):
             ax.plot(x, y, 'o', ms=.8, color='.75', zorder=10)
 
