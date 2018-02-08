@@ -60,7 +60,7 @@ class Application(tk.Frame):
         label = tk.Label(master=root, text="A")
         label.grid(row=1, column=2)
         self.tuneA = tk.Scale(master=root, from_=0.0, to=10.0,
-            resolution=0.1, length=500, orient="horizontal")
+            resolution=0.1, length=500, orient="horizontal",tickinterval=1)
         self.tuneA.set(5.0)
         self.tuneA.grid(row=1, column=1, columnspan=2)
         self.tuneA.bind("<ButtonRelease>",
@@ -69,10 +69,10 @@ class Application(tk.Frame):
             lambda event: self.changeA(canvas, ax, final_update=False))
 
         # tune B
-        label = tk.Label(master=root, text="B [GeV]")
+        label = tk.Label(master=root, text="B [GeV^2]")
         label.grid(row=2, column=2)
         self.tuneB = tk.Scale(master=root, from_=0.0, to=10.0,
-            resolution=0.1, length=500, orient="horizontal")
+            resolution=0.1, length=500, orient="horizontal",tickinterval=1)
         self.tuneB.set(5.0)
         self.tuneB.grid(row=2, column=1, columnspan=2)
         self.tuneB.bind("<ButtonRelease>",
@@ -84,7 +84,7 @@ class Application(tk.Frame):
         label = tk.Label(master=root, text="log(\mu)")
         label.grid(row=3, column=2)
         self.tuneM = tk.Scale(master=root, from_=-0.5, to=1.5,
-            resolution=0.02, length=500, orient="horizontal")
+            resolution=0.02, length=500, orient="horizontal",tickinterval=.5)
         self.tuneM.set(0.0)
         self.tuneM.grid(row=3, column=1, columnspan=2)
         self.tuneM.bind("<ButtonRelease>",
