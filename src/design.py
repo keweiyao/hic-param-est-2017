@@ -104,34 +104,22 @@ class Design:
     project, if not completely rewritten.
 
     """
-    def __init__(self, system, npoints=50, validation=False, seed=None):
+    def __init__(self, system, npoints=60, validation=False, seed=None):
         self.system = system
         self.projectiles, self.beam_energy = parse_system(system)
         self.type = 'validation' if validation else 'main'
 
-        # 5.02 TeV has ~1.2x particle production as 2.76 TeV
-        # [https://inspirehep.net/record/1410589]
-        norm_range = {
-            2760: (8., 20.),
-            5020: (10., 25.),
-        }[self.beam_energy]
-
         self.keys, labels, self.range = map(list, zip(*[
-            ('log_scale',	r'$\log\mu$',		(-0.5,	1.5)),
-			('qhat_A',				r'$A$',				(1.,	10.)),
-            ('qhat_B',				r'$B$ [GeV${}^2$]',	(0.,	10.)),
+            ('scale',	    '$\log\mu$',    (-0.5,	1.5)),
+			('qhat_A',		'$\log (1+A)$',	(0.01,	2.5)),
+            ('qhat_B',		'$\log (1+B)$',	(0.01,	2.5)),
         ]))
 
         # convert labels into TeX:
         #   - wrap normal text with \mathrm{}
         #   - escape spaces
         #   - surround with $$
-        self.labels = [
-            re.sub(r'({[A-Za-z]+})', r'\mathrm\1', i)
-            .replace(' ', r'\ ')
-            .join('$$')
-            for i in labels
-        ]
+        self.labels = [ i for i in labels ]
 
         self.ndim = len(self.range)
         self.min, self.max = map(np.array, zip(*self.range))
@@ -175,9 +163,9 @@ B = {qhatB}"""
         outdir.mkdir(parents=True, exist_ok=True)
 
         for point, row in zip(self.points, self.array):
-            logmu = row[self.keys.index('log_scale')]
-            qhatA = row[self.keys.index('qhat_A')]
-            qhatB = row[self.keys.index('qhat_B')]
+            logmu = row[self.keys.index('scale')]
+            logqhatA = row[self.keys.index('qhat_A')]
+            logqhatB = row[self.keys.index('qhat_B')]
             kwargs = {
                 "sqrts": self.beam_energy,
                 "ptype": 'c',
@@ -185,8 +173,8 @@ B = {qhatB}"""
                 "transport": 'Hybrid',
                 "inelastic": 'True',
                 "scale": np.exp(logmu),
-                "qhatA": qhatA,
-                "qhatB": qhatB,
+                "qhatA": np.exp(logqhatA)-1.,
+                "qhatB": np.exp(logqhatB)-1.,
                 "normalization": {
                     2760: 14.4,
                     5020: 20.9,

@@ -1,8 +1,8 @@
 *.dat
 *.hdf
 *.npy
-*.pdf
 *.pkl
 *.pyc
 *.hdf5
 slides/
+input*/

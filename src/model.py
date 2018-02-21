@@ -64,9 +64,9 @@ def _data(system, dataset='main'):
     if dataset not in {'main', 'validation', 'map'}:
         raise ValueError('invalid dataset: {}'.format(dataset))
 
-    filep = Path(workdir, 'model_output', dataset, system, 'hybrid.hdf5')
+    filep = Path(workdir, 'model_output', dataset, system, 'hybrid-20180213.hdf5')
 
-    cachefile = Path(cachedir, 'model', dataset, system, 'hybrid.hdf5')
+    cachefile = Path(cachedir, 'model', dataset, system, 'hybrid-20180213.hdf5')
 
     logging.info(
         'loading %s/%s data and computing observables',

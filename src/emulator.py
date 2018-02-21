@@ -86,7 +86,11 @@ class Emulator:
         for obs, specie, cenlist in self.observables:
             self._slices[obs] = {specie: {} }
             for cen in cenlist:
-                Y.append(model.data[system][nPDF][obs][specie][cen]['Y'])
+                # take the log of RAA
+                raw = model.data[system][nPDF][obs][specie][cen]['Y']
+                #if obs == 'RAA':
+                #    raw = np.log(raw)
+                Y.append(raw)
                 n = Y[-1].shape[1]
                 self._slices[obs][specie][cen] = slice(nobs, nobs + n)
                 nobs += n
@@ -110,7 +114,7 @@ class Emulator:
         kernel = (
             1. * kernels.RBF(
                 length_scale=ptp,
-                length_scale_bounds=np.outer(ptp, (1e-1, 1e3))
+                length_scale_bounds=np.outer(ptp, (1e-1, 1e1))
             ) +
             kernels.WhiteKernel(
                 noise_level=.1**2,
@@ -255,7 +259,9 @@ class Emulator:
         mean = self._inverse_transform(
             np.concatenate([m[:, np.newaxis] for m in gp_mean], axis=1)
         )
-
+        # take RAA back from log(RAA)
+        #mean['RAA']['D0']['0-10'] = np.exp(mean['RAA']['D0']['0-10'])
+        #mean['RAA']['D0']['0-100'] = np.exp(mean['RAA']['D0']['0-100'])
         if return_cov:
             # Build array of the GP predictive variances at each sample point.
             # shape: (nsamples, npc)

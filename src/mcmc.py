@@ -29,7 +29,8 @@ from contextlib import contextmanager
 import logging
 
 import emcee
-#from emcee.utils import MPIPool
+import multiprocessing
+from emcee.utils import MPIPool
 import h5py
 import numpy as np
 from scipy.linalg import lapack
@@ -110,7 +111,6 @@ class LoggingEnsembleSampler(emcee.EnsembleSampler):
 
         return result
 
-
 class Chain:
     """
     High-level interface for running MCMC calibration and accessing results.
@@ -129,7 +129,7 @@ class Chain:
         ('V2', 'D0', ['0-10', '10-30', '30-50']),
     ]
 
-    def __init__(self, path=workdir / 'mcmc' / 'chain.hdf', nPDF='nCTEQ'):
+    def __init__(self, path=workdir / 'mcmc' / 'chain-20180213.hdf', nPDF='nCTEQ'):
         self.path = path
         self.path.parent.mkdir(exist_ok=True)
         self.nPDF = nPDF
@@ -139,7 +139,7 @@ class Chain:
         #  - model sys error
         def keys_labels_range():
             d = Design(systems[0])
-            klr = zip(d.keys, [l[1:-1] for l in d.labels], d.range)
+            klr = zip(d.keys, d.labels, d.range)
 
             yield from klr
 
@@ -343,7 +343,6 @@ class Chain:
 
             sampler.run_mcmc(X0, nsteps, status=status)
 
-            #pool.close()
             logging.info('writing chain to file')
             dset.resize(dset.shape[1] + nsteps, 1)
             dset[:, -nsteps:, :] = sampler.chain

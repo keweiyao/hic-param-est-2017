@@ -96,7 +96,7 @@ class HEPData:
         for name in ['PT', 'electron $\\it{p}_{T} (GeV/\\it{c})$',
                       '$p_{\\rm T}$', '<pT> +-(dx)']:
             x = self.x(name, case=False)
- 
+
             if x != None:
                break
         if x is None:
@@ -107,7 +107,7 @@ class HEPData:
         except KeyError:
             # try to guess bins from midpoints
             if np.isreal(x[0]['value']):
-                mids = [v['value'] for v in x]    
+                mids = [v['value'] for v in x]
                 width = set(a - b for a, b in zip(mids[1:], mids[:-1]))
                 if len(width) > 1:
                     raise RuntimeError('variable bin widths')
@@ -187,7 +187,7 @@ class HEPData:
                     if abs(e['plus']) != abs(e['minus']):
                         warnings.warn(bcolors.WARNING + 'Asymmetric errors are not implemented'+ bcolors.ENDC)
                     continue
-                    
+
 
                 yerr[err.get('label', 'sum')].append(e)
 
@@ -246,19 +246,19 @@ def _data():
         # 2) ALICE, Pb+Pb, Flow, HF -> e+e-
         for i, cen in enumerate(['0-10', '10-20', '20-40'], start=1):
             dset = HEPData(1466626, i).dataset("v2 +-(stat) +(systUncorr) - (systUncorr)")
-            data['PbPb2760']['V2']['HF->e+e-'].update({cen: dset}) 
+            data['PbPb2760']['V2']['HF->e+e-'].update({cen: dset})
 
         # 3) ALICE, Pb+Pb, Flow, D0
         for i, cen in enumerate(['0-10', '10-20', '30-50'], start=1):
             dset = HEPData(1294938, i).dataset("V2")
             data['PbPb2760']['V2']['D0'].update({cen: dset})
-        
+
         # 4) ALICE, Pb+Pb, RAA, D meson
         for i, cen in enumerate(['0-10', '30-50'], start=15):
             dset = HEPData(1394580, i).dataset('$R_{\\rm AA}$')
             data['PbPb2760']['RAA']['D-avg'].update({cen: dset})
         # 5) ALICE, Pb+Pb, RAA, c, b hadron to e+e-
-        for i, cen in enumerate(['0-10', '10-20', '20-30', 
+        for i, cen in enumerate(['0-10', '10-20', '20-30',
                        '30-40', '40-50', '50-80'], start=7):
             dset = HEPData(1487727, i).dataset('$R_{AA}$')
             data['PbPb2760']['RAA']['HF->e+e-'].update({cen: dset})
@@ -304,7 +304,7 @@ data = _data()
 
 def cov(
         system1, obs1, specie1, cen1, system2, obs2, specie2, cen2,
-        stat_frac=1e-4, sys_corr_length=10, cross_factor=.5,
+        stat_frac=1e-4, sys_corr_length=1, cross_factor=.5,
         corr_obs={
             frozenset({'dNch_deta', 'dET_deta', 'dN_dy'}),
         },
@@ -414,9 +414,9 @@ def plot_data(d, indent=0):
                 for c in v[a][b]:
                     print(c)
                     iv = v[a][b][c]
-                    plt.errorbar(iv['x'], iv['y'], yerr=iv['yerr']['stat'], 
+                    plt.errorbar(iv['x'], iv['y'], yerr=iv['yerr']['stat'],
                                  label="{}/{}/{}/{}".format(k,a,b,c))
-        
+
                 plt.legend(framealpha=0)
                 plt.show()
 
@@ -433,4 +433,3 @@ if __name__ == '__main__':
     print_data(data)
     #plot_data(data)
     #test_cov()
-

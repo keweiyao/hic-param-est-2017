@@ -206,11 +206,11 @@ def obs_color_hsluv(obs, nPDF):
         if nPDF == 'EPS09':
             return 250, 90, 55
         else:
-            return 250, 90, 55
+            return 130, 90, 55
 
     if obs == 'V2':
         if nPDF == 'EPS09':
-            return 130, 90, 55
+            return 250, 90, 55
         else:
             return 130, 90, 55
 
@@ -264,7 +264,7 @@ def _observables_plots():
     ]
 
 
-def _observables(posterior=False, nPDF=None):
+def _observables(posterior=False, nPDF=None, plot_type='violins'):
     """
     Model observables at all design points or drawn from the posterior with
     experimental data points.
@@ -287,22 +287,34 @@ def _observables(posterior=False, nPDF=None):
     system = 'PbPb5020'
     for plot, rowax in zip(plots, [[ax1, ax2], [ax3,ax4,ax5]]):
         for (obs, specie, cen, opts), ax in zip(plot['subplots'], rowax):
+            # load exp
+            try:
+                dset = expt.data[system][obs][specie][cen]
+            except KeyError:
+                continue
+
             scale = opts.get('scale')
 
             color = obs_color(obs, nPDF)
             x = model.data[system][nPDF][obs][specie][cen]['x']
             Y = samples[system][obs][specie][cen] if posterior else model.data[system][nPDF][obs][specie][cen]['Y']
-
+            w = [h-l for l, h in dset['pT'] ]
             if scale is not None:
                 Y = Y*scale
 
-            for y in Y:
-                ax.plot(x, y, color=color, alpha=.2, lw=.3,)
-
-            try:
-                dset = expt.data[system][obs][specie][cen]
-            except KeyError:
-                continue
+            if plot_type=='lines':
+                for y in Y:
+                    ax.plot(x, y, color=color, alpha=.2, lw=.3,)
+            elif plot_type=='violins':
+                violin = ax.violinplot(list(Y.T), x, widths=w, showextrema=True, showmedians=True)
+                for b in violin['bodies']:
+                    b.set_color(color)
+                for partname in ('cbars','cmins','cmaxes','cmedians'):
+                    vp = violin[partname]
+                    vp.set_edgecolor(color)
+                    vp.set_linewidth(1)
+            else:
+                raise KeyError("Unknown plot type")
 
             x = dset['x']
             y = dset['y']
@@ -333,7 +345,7 @@ def _observables(posterior=False, nPDF=None):
                 ax.minorticks_off()
             else:
                 auto_ticks(ax, 'y', nbins=4, minor=2)
-           
+
             if plot.get('xscale') == 'log':
                 ax.set_xscale('log')
                 ax.minorticks_off()
@@ -384,19 +396,19 @@ def qhat_diff():
 
 @plot
 def observables_design_EPS09():
-    _observables(posterior=False, nPDF='EPS09')
+    _observables(posterior=False, nPDF='EPS09', plot_type='lines')
 
 @plot
 def observables_design_nCTEQ():
-    _observables(posterior=False, nPDF='nCTEQ')
+    _observables(posterior=False, nPDF='nCTEQ', plot_type='lines')
 
 @plot
 def observables_posterior_EPS09():
-    _observables(posterior=True,  nPDF='EPS09')
+    _observables(posterior=True,  nPDF='EPS09', plot_type='violins')
 
 @plot
 def observables_posterior_nCTEQ():
-    _observables(posterior=True,  nPDF='nCTEQ')
+    _observables(posterior=True,  nPDF='nCTEQ', plot_type='violins')
 
 @plot
 def observables_map():
@@ -445,10 +457,10 @@ def observables_map():
     handles = dict(expt={}, model={})
 
     for plot, ax, ratio_ax in zip(plots, axes[::2].flat, axes[1::2].flat):
-        for system, (obs, subobs, opts) in itertools.product(
+        for system, (obs, specie, cen) in itertools.product(
                 systems, plot['subplots']
         ):
-            color = obs_color(obs, subobs)
+            color = obs_color(obs, nPDF)
             scale = opts.get('scale')
 
             linestyle, fill_markers = {
@@ -513,13 +525,13 @@ def observables_map():
         else:
             auto_ticks(ax, 'y', nbins=4, minor=2)
 
-        for a in [ax, ratio_ax]:    
+        for a in [ax, ratio_ax]:
             auto_ticks(a, 'x', nbins=5, minor=2)
 
         if ratio_ax.is_last_row():
             ratio_ax.set_xlabel('Centrality %')
 
-        
+
         ax.set_ylabel(plot['ylabel'])
 
         if plot.get('legend'):
@@ -559,80 +571,72 @@ def find_map():
 
     """
     from scipy.optimize import minimize
-
-    chain = mcmc.Chain()
+    nPDFs = ['EPS09', 'nCTEQ']
+    chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
 
     fixed_params = {
-        'trento_p': 0.,
-        'etas_min': .08,
-        'etas_hrg': .3,
         'model_sys_err': .1,
     }
 
-    opt_params = [k for k in chain.keys if k not in fixed_params]
+    opt_params = [k for k in chain['EPS09'].keys if k not in fixed_params]
 
     def full_x(x):
         x = dict(zip(opt_params, x), **fixed_params)
-        return [x[k] for k in chain.keys]
+        return [x[k] for k in chain['EPS09'].keys]
 
-    res = minimize(
-        lambda x: -chain.log_posterior(full_x(x))[0],
-        x0=np.median(chain.load(*opt_params, thin=1000), axis=0),
+    res = {nPDF: minimize(
+        lambda x: -chain[nPDF].log_posterior(full_x(x))[0],
+        x0=np.median(chain[nPDF].load(*opt_params, thin=1000), axis=0),
         tol=1e-8,
         bounds=[
             (a + 1e-6*(b - a), b - 1e-6*(b - a))
-            for (a, b), k in zip(chain.range, chain.keys)
+            for (a, b), k in zip(chain[nPDF].range, chain[nPDF].keys)
             if k in opt_params
         ]
-    )
+      ) for nPDF in nPDFs}
 
-    logging.debug('optimization result:\n%s', res)
-    width = max(map(len, chain.keys)) + 2
-    logging.info(
-        'MAP params:\n%s',
-        '\n'.join(
-            k.ljust(width) + str(x) for k, x in zip(chain.keys, full_x(res.x))
-        )
-    )
+    logging.info('optimization result:\n%s', res)
 
-    pred = chain._predict(np.atleast_2d(full_x(res.x)))
+
+    preds = {nPDF: chain[nPDF]._predict(np.atleast_2d(full_x(res[nPDF].x))) \
+                for nPDF in nPDFs}
 
     plots = _observables_plots()
 
-    fig, axes = plt.subplots(
-        nrows=2*len(plots), ncols=len(systems),
-        figsize=(.8*fullwidth, 1.4*fullwidth),
-        gridspec_kw=dict(
-            height_ratios=list(itertools.chain.from_iterable(
-                (p.get('height_ratio', 1), .4) for p in plots
-            ))
-        )
-    )
+    fig = plt.figure(figsize=(fullwidth, 0.8*fullwidth))
 
-    for (plot, system), ax, ratio_ax in zip(
-            itertools.product(plots, systems), axes[::2].flat, axes[1::2].flat
-    ):
-        for obs, subobs, opts in plot['subplots']:
-            color = obs_color(obs, subobs)
+    gs = GridSpec(4, 6)
+    ax1 = plt.subplot(gs[0, :3]); rax1 = plt.subplot(gs[1, :3])
+    ax2 = plt.subplot(gs[0, 3:]); rax2 = plt.subplot(gs[1, 3:])
+    ax3 = plt.subplot(gs[2, :2]);rax3 = plt.subplot(gs[3, :2])
+    ax4 = plt.subplot(gs[2, 2:4]);rax4 = plt.subplot(gs[3, 2:4])
+    ax5 = plt.subplot(gs[2, 4:]); rax5 = plt.subplot(gs[3, 4:])
+    system = 'PbPb5020'
+
+    for plot, rowax in zip(plots, [[[ax1,rax1], [ax2,rax2]], [[ax3,rax3],[ax4, rax4],[ax5, rax5]]]):
+        for (obs, specie, cen, opts), axs in zip(plot['subplots'], rowax):
+            ax, rax = axs
             scale = opts.get('scale')
+            ax.set_xlim(plot['xlim'])
+            ax.semilogx()
+            ax.set_ylim(plot['ylim'])
+            rax.set_xlim(plot['xlim'])
+            rax.semilogx()
+            for nPDF in nPDFs:
+                color = obs_color(obs, nPDF)
+                x = model.data[system][nPDF][obs][specie][cen]['x']
+                y = preds[nPDF][system][obs][specie][cen][0]
 
-            x = model.data[system][obs][subobs]['x']
-            y = pred[system][obs][subobs][0]
+                if scale is not None:
+                    y = y*scale
 
-            if scale is not None:
-                y = y*scale
+                ax.plot(x, y, color=color, label=nPDF)
 
-            ax.plot(x, y, color=color)
-
-            if 'label' in opts:
-                ax.text(
-                    x[-1] + 3, y[-1],
-                    opts['label'],
-                    color=darken(color), ha='left', va='center'
-                )
-
+            if ax == ax1:
+                ax.legend(loc='upper center')
             try:
-                dset = expt.data[system][obs][subobs]
+                dset = expt.data[system][obs][specie][cen]
+                w = [h-l for l, h in dset['pT'] ]
             except KeyError:
                 continue
 
@@ -641,6 +645,14 @@ def find_map():
             yerr = dset['yerr']
             yerrstat = yerr.get('stat')
             yerrsys = yerr.get('sys', yerr.get('sum'))
+
+            if 'label' in opts:
+                ax.text(
+                    x[-1]*0.7,
+                    (yexp[-1]+yerrsys[-1]*2),
+                    opts['label'],
+                    color=darken(color), ha='left', va='center'
+                )
 
             if scale is not None:
                 yexp = yexp*scale
@@ -653,50 +665,69 @@ def find_map():
                 x, yexp, yerr=yerrstat, fmt='o', ms=1.7,
                 capsize=0, color='.25', zorder=1000
             )
+            for ix, iw, il, ih in zip(x, w, yexp - yerrsys, yexp + yerrsys):
+                ax.fill_between(
+                    [ix-iw/2., ix+iw/2.], [il, il], [ih, ih],
+                    color='.9', zorder=-10
+                )
 
-            ax.fill_between(
-                x, yexp - yerrsys, yexp + yerrsys,
-                color='.9', zorder=-10
-            )
+            # ratio plot
+            for nPDF in nPDFs:
+                color = obs_color(obs, nPDF)
+                x = model.data[system][nPDF][obs][specie][cen]['x']
+                y = preds[nPDF][system][obs][specie][cen][0]
 
-            ratio_ax.plot(x, y/yexp, color=color)
+                if scale is not None:
+                    y = y*scale
+                rax.errorbar(
+                    x, yexp/y, yerr=yerrstat/y, fmt='o', ms=1.7,
+                    capsize=0, color=color, zorder=1000
+                )
+                for ix, iw, il, ih, ic in \
+                    zip(x, w, yexp - yerrsys, yexp + yerrsys, y):
+                    rax.fill_between(
+                        [ix-iw/2., ix+iw/2.],
+                        [il/ic, il/ic], [ih/ic, ih/ic],
+                        zorder=-10,
+                        facecolor='white', edgecolor=color
+                    )
+                rax.plot(plot['xlim'], np.ones_like(plot['xlim']), 'k-')
+                rax.set_ylim(0,2)
 
-        if plot.get('yscale') == 'log':
-            ax.set_yscale('log')
-            ax.minorticks_off()
-        else:
-            auto_ticks(ax, 'y', nbins=4, minor=2)
 
-        for a in [ax, ratio_ax]:
-            a.set_xlim(0, 80)
-            auto_ticks(a, 'x', nbins=5, minor=2)
+            if plot.get('yscale') == 'log':
+                ax.set_yscale('log')
+                ax.minorticks_off()
+            else:
+                auto_ticks(ax, 'y', nbins=4, minor=2)
 
-        ax.set_xticklabels([])
+            if plot.get('xscale') == 'log':
+                ax.set_xscale('log')
+                ax.minorticks_off()
+            else:
+                auto_ticks(ax, 'x', nbins=5, minor=2)
 
-        ax.set_ylim(plot['ylim'])
+            ax.set_ylim(plot['ylim'])
 
-        if ax.is_first_row():
-            ax.set_title(format_system(system))
-        elif ax.is_last_row():
-            ax.set_xlabel('Centrality %')
+            if ax.is_first_row():
+                ax.set_title(format_system(system))
+            if rax.is_last_row():
+                rax.set_xlabel(r'$p_T$ [GeV]')
 
-        if ax.is_first_col():
-            ax.set_ylabel(plot['ylabel'])
+            if ax.is_first_col():
+                ax.set_ylabel(plot['ylabel'])
+            if rax.is_first_col():
+                rax.set_ylabel(plot['ylabel']+', exp./calc.')
 
-        if ax.is_last_col():
-            ax.text(
-                1.02, .5, plot['title'],
-                transform=ax.transAxes, ha='left', va='center',
-                size=plt.rcParams['axes.labelsize'], rotation=-90
-            )
+            if ax.is_last_col():
+                ax.text(
+                    1.02, .5, plot['title'],
+                    transform=ax.transAxes, ha='left', va='center',
+                    size=plt.rcParams['axes.labelsize'], rotation=-90
+                )
 
-        ratio_ax.axhline(1, lw=.5, color='0.5', zorder=-100)
-        ratio_ax.axhspan(0.9, 1.1, color='0.95', zorder=-200)
-        ratio_ax.set_ylim(0.8, 1.2)
-        ratio_ax.set_yticks(np.arange(80, 121, 20)/100)
-        ratio_ax.set_ylabel('Ratio')
 
-    set_tight(fig, rect=[0, 0, .97, 1])
+    set_tight(fig, rect=[0., 0., .97, 1])
 
 
 def format_ci(samples, ci=.9):
@@ -725,7 +756,7 @@ def format_ci(samples, ci=.9):
         '$', fmt.format(median),
         '_{-', fmt.format(ul), '}',
         '^{+', fmt.format(uh), '}$'
-    ])
+    ]), {'m': median, 'l': ul, 'h': uh}
 
 
 def _posterior(
@@ -738,7 +769,8 @@ def _posterior(
 
     """
     chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
-    
+
+
     if params is None and ignore is None:
         params = set(chain[nPDFs[0]].keys)
     elif params is not None:
@@ -747,20 +779,44 @@ def _posterior(
         params = set(chain[nPDFs[0]].keys) - set(ignore)
 
     keys, labels, ranges = map(list, zip(*(
-        i for i in zip(chain[nPDFs[0]].keys, 
+        i for i in zip(chain[nPDFs[0]].keys,
                        chain[nPDFs[0]].labels, chain[nPDFs[0]].range)
         if i[0] in params
     )))
-    print(keys)
+    print(ranges)
     ndim = len(params)
 
     data = {nPDF: chain[nPDF].load(*keys).T for nPDF in nPDFs}
-    if 'log_scale' in keys:
+    # output some samples
+    for nPDF in nPDFs:
+        indices = np.random.choice(data[nPDF].shape[1], 100)
+        with open(nPDF+"-sample-parameter.txt", 'w') as f:
+            ps = data[nPDF][:, indices]
+            for p in ps.T:
+                print(np.exp(p[0]), '\t', np.exp(p[1])-1., '\t',
+    				 np.exp(p[2])-1., file=f)
+    if 'scale' in keys:
+        key = 'scale'
         for nPDF in nPDFs:
-            data[nPDF][keys.index('log_scale')] = \
-                            np.exp(data[nPDF][keys.index('log_scale')])
-        ranges[keys.index('log_scale')] = np.exp(ranges[keys.index('log_scale')])
-        labels[keys.index('log_scale')] = '$\mu$'
+            data[nPDF][keys.index(key)] = \
+                            np.exp(data[nPDF][keys.index(key)])
+        ranges[keys.index(key)] = np.exp(ranges[keys.index(key)])
+        labels[keys.index(key)] = r'$\mu$'
+    if 'qhat_A' in keys:
+        key = 'qhat_A'
+        for nPDF in nPDFs:
+            data[nPDF][keys.index(key)] = \
+                            np.exp(data[nPDF][keys.index(key)])-1.
+        ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
+        labels[keys.index(key)] = r'$A$'
+    if 'qhat_B' in keys:
+        key = 'qhat_B'
+        for nPDF in nPDFs:
+            data[nPDF][keys.index(key)] = \
+                            np.exp(data[nPDF][keys.index(key)])-1.
+        ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
+        labels[keys.index(key)] = r'$B$'
+
     cmap1 = plt.get_cmap('Reds')
     cmap1.set_bad('white')
     cmap2 = plt.get_cmap('Blues')
@@ -776,31 +832,37 @@ def _posterior(
         figsize=2*(scale*fullheight,)
     )
 
-    for samples1, samples2, key, lim, ax in \
-        zip(data['EPS09'], data['nCTEQ'], keys, ranges, axes.diagonal()):
-        
-        for samples, line_color, fill_color in \
-            zip([samples1, samples2], line_colors, fill_colors):
+    sdict1 = {}
+    sdict2 = {}
+    for i, (samples1, samples2, key, lim, ax) in \
+        enumerate(zip(data['EPS09'], data['nCTEQ'], keys, ranges, axes.diagonal())):
+        interps = {}
+        for j, (samples, line_color, fill_color) in \
+            enumerate(zip([samples1, samples2], line_colors, fill_colors)):
 
             counts, edges = np.histogram(samples, bins=50, range=lim)
             x = (edges[1:] + edges[:-1]) / 2
             y = .85 * (lim[1] - lim[0]) * counts / counts.max() + lim[0]
             # smooth histogram with monotonic cubic interpolation
             interp = PchipInterpolator(x, y)
+            interps[j] = interp
             x = np.linspace(x[0], x[-1], 10*x.size)
             y = interp(x)
             ax.plot(x, y, lw=1., color=line_color)
             ax.fill_between(x, lim[0], y, color=fill_color, zorder=-10)
-
         ax.set_xlim(lim)
         ax.set_ylim(lim)
 
+        stex1, dict1 = format_ci(samples1)
+        sdict1[i] = dict1
         ax.annotate(
-            format_ci(samples1), (.72, .86), xycoords='axes fraction',
+            stex1, (.72, .86), xycoords='axes fraction',
             ha='center', va='bottom', fontsize=8, color=line_colors[0]
         )
+        stex2, dict2 = format_ci(samples2)
+        sdict2[i] = dict2
         ax.annotate(
-            format_ci(samples2), (.32, .86), xycoords='axes fraction',
+            stex2, (.32, .86), xycoords='axes fraction',
             ha='center', va='bottom', fontsize=8, color=line_colors[1]
         )
 
@@ -810,12 +872,27 @@ def _posterior(
             range=(ranges[nx], ranges[ny]),
             cmap=cmap1, cmin=1
         )
+        axes[ny][nx].set_xlim(ranges[nx])
+        axes[ny][nx].set_ylim(ranges[ny])
+
+        axes[ny][nx].errorbar(sdict1[nx]['m'], sdict1[ny]['m'],
+                              xerr=[[sdict1[nx]['l']], [sdict1[nx]['h']]],
+                              yerr=[[sdict1[ny]['l']], [sdict1[ny]['h']]],
+                             color=line_colors[0], fmt='D')
+
         axes[nx][ny].hist2d(
             data['nCTEQ'][ny], data['nCTEQ'][nx], bins=100,
             range=(ranges[ny], ranges[nx]),
             cmap=cmap2, cmin=1
         )
-        #axes[nx][ny].set_axis_off()
+        axes[nx][ny].set_xlim(ranges[ny])
+        axes[nx][ny].set_ylim(ranges[nx])
+
+        axes[nx][ny].errorbar(sdict2[ny]['m'], sdict2[nx]['m'],
+                              xerr=[[sdict2[ny]['l']], [sdict2[ny]['h']]],
+                              yerr=[[sdict2[nx]['l']], [sdict2[nx]['h']]],
+                             color=line_colors[1], fmt='D')
+
 
     for key, label, axb, axl in zip(keys, labels, axes[-1], axes[:, 0]):
         for axis in [axb.xaxis, axl.yaxis]:
@@ -844,434 +921,8 @@ def posterior():
     _posterior(scale=1.6, padr=1., padt=.99, nPDFs=['EPS09', 'nCTEQ'])
 
 
-@plot
-def posterior_shear():
-    _posterior(
-        scale=.35, padt=.96, padr=1.,
-        params={'etas_min', 'etas_slope', 'etas_curv'}
-    )
-
-
-@plot
-def posterior_bulk():
-    _posterior(
-        scale=.3, padt=.96, padr=1.,
-        params={'zetas_max', 'zetas_width'}
-    )
-
-
-@plot
-def posterior_p():
-    """
-    Distribution of trento p parameter with annotations for other models.
-
-    """
-    plt.figure(figsize=(.65*textwidth, .25*textwidth))
-    ax = plt.axes()
-
-    data = mcmc.Chain().load('trento_p').ravel()
-
-    counts, edges = np.histogram(data, bins=50)
-    x = (edges[1:] + edges[:-1]) / 2
-    y = counts / counts.max()
-    interp = PchipInterpolator(x, y)
-    x = np.linspace(x[0], x[-1], 10*x.size)
-    y = interp(x)
-    ax.plot(x, y, color=plt.cm.Blues(0.8))
-    ax.fill_between(x, y, color=plt.cm.Blues(0.15), zorder=-10)
-
-    ax.set_xlabel('$p$')
-
-    for spine in ax.spines.values():
-        spine.set_visible(False)
-
-    for label, x, err in [
-            ('KLN', -.67, .01),
-            ('EKRT /\nIP-Glasma', 0, .1),
-            ('Wounded\nnucleon', 1, None),
-    ]:
-        args = ([x], [0], 'o') if err is None else ([x - err, x + err], [0, 0])
-        ax.plot(*args, lw=4, ms=4, color=offblack, alpha=.58, clip_on=False)
-
-        if label.startswith('EKRT'):
-            x -= .275
-
-        ax.text(x, .05, label, va='bottom', ha='center')
-
-    ax.text(.1, .8, format_ci(data))
-    ax.set_xticks(np.arange(-10, 11, 5)/10)
-    ax.set_xticks(np.arange(-75, 76, 50)/100, minor=True)
-
-    for t in ax.get_xticklabels():
-        t.set_y(-.03)
-
-    xm = 1.2
-    ax.set_xlim(-xm, xm)
-    ax.add_artist(
-        patches.FancyArrowPatch(
-            (-xm, 0), (xm, 0),
-            linewidth=.6,
-            arrowstyle=patches.ArrowStyle.CurveFilledAB(
-                head_length=3, head_width=1.5
-            ),
-            facecolor=offblack, edgecolor=offblack,
-            clip_on=False, zorder=100
-        )
-    )
-
-    ax.set_yticks([])
-    ax.set_ylim(0, 1.01*y.max())
-
-    set_tight(pad=0)
-
-
 region_style = dict(color='.93', zorder=-100)
 Tc = .154
-
-
-def _region_shear(mode='full', scale=.6):
-    """
-    Estimate of the temperature dependence of shear viscosity eta/s.
-
-    """
-    plt.figure(figsize=(scale*textwidth, scale*aspect*textwidth))
-    ax = plt.axes()
-
-    def etas(T, m=0, s=0, c=0):
-        return m + s*(T - Tc)*(T/Tc)**c
-
-    chain = mcmc.Chain()
-
-    rangedict = dict(zip(chain.keys, chain.range))
-    ekeys = ['etas_' + k for k in ['min', 'slope', 'curv']]
-
-    T = np.linspace(Tc, .3, 100)
-
-    prior = ax.fill_between(
-        T, etas(T, *(rangedict[k][1] for k in ekeys)),
-        **region_style
-    )
-
-    ax.set_xlim(xmin=.15)
-    ax.set_ylim(0, .6)
-    ax.set_xticks(np.arange(150, 301, 50)/1000)
-    ax.xaxis.set_minor_locator(ticker.AutoMinorLocator(2))
-    auto_ticks(ax, 'y', minor=2)
-
-    ax.set_xlabel('Temperature [GeV]')
-    ax.set_ylabel(r'$\eta/s$')
-
-    if mode == 'empty':
-        return
-
-    if mode == 'examples':
-        for args in [
-                (.05, 1.0, -1),
-                (.10, 1.7, 0),
-                (.15, 2.0, 1),
-        ]:
-            ax.plot(T, etas(T, *args), color=plt.cm.Blues(.7))
-        return
-
-    eparams = chain.load(*ekeys).T
-    intervals = np.array([
-        mcmc.credible_interval(etas(t, *eparams))
-        for t in T
-    ]).T
-
-    band = ax.fill_between(T, *intervals, color=plt.cm.Blues(.32))
-
-    ax.plot(T, np.full_like(T, 1/(4*np.pi)), color='.6')
-    ax.text(.299, .07, r'KSS bound $1/4\pi$', va='top', ha='right', color='.4')
-
-    median, = ax.plot(
-        T, etas(T, *map(np.median, eparams)),
-        color=plt.cm.Blues(.77)
-    )
-
-    ax.legend(*zip(*[
-        (prior, 'Prior range'),
-        (median, 'Posterior median'),
-        (band, '90% credible region'),
-    ]), loc='upper left', bbox_to_anchor=(0, 1.03))
-
-
-@plot
-def region_shear():
-    _region_shear()
-
-
-@plot
-def region_shear_empty():
-    _region_shear('empty')
-
-
-@plot
-def region_shear_examples():
-    _region_shear('examples', scale=.5)
-
-
-def _region_bulk(mode='full', scale=.6):
-    """
-    Estimate of the temperature dependence of bulk viscosity zeta/s.
-
-    """
-    plt.figure(figsize=(scale*textwidth, scale*aspect*textwidth))
-    ax = plt.axes()
-
-    def zetas(T, zetas_max=0, zetas_width=1):
-        return zetas_max / (1 + ((T - Tc)/zetas_width)**2)
-
-    chain = mcmc.Chain()
-
-    keys, ranges = map(list, zip(*(
-        i for i in zip(chain.keys, chain.range)
-        if i[0].startswith('zetas')
-    )))
-
-    T = Tc*np.linspace(.5, 1.5, 1000)
-
-    maxdict = {k: r[1] for k, r in zip(keys, ranges)}
-    ax.fill_between(
-        T, zetas(T, **maxdict),
-        label='Prior range',
-        **region_style
-    )
-
-    ax.set_xlim(T[0], T[-1])
-    ax.set_ylim(0, 1.05*maxdict['zetas_max'])
-    auto_ticks(ax, minor=2)
-
-    ax.set_xlabel('Temperature [GeV]')
-    ax.set_ylabel(r'$\zeta/s$')
-
-    if mode == 'empty':
-        return
-
-    if mode == 'examples':
-        for args in [
-                (.025, .01),
-                (.050, .03),
-                (.075, .05),
-        ]:
-            ax.plot(T, zetas(T, *args), color=plt.cm.Blues(.7))
-        return
-
-    # use a Gaussian mixture model to classify zeta/s parameters
-    samples = chain.load(*keys, thin=10)
-    gmm = GaussianMixture(n_components=3, covariance_type='full').fit(samples)
-    labels = gmm.predict(samples)
-
-    for n in range(gmm.n_components):
-        params = dict(zip(
-            keys,
-            (mcmc.credible_interval(s)[1] for s in samples[labels == n].T)
-        ))
-
-        if params['zetas_max'] > .05:
-            cmap = 'Blues'
-        elif params['zetas_width'] > .03:
-            cmap = 'Greens'
-        else:
-            cmap = 'Oranges'
-
-        curve = zetas(T, **params)
-        color = getattr(plt.cm, cmap)(.65)
-
-        ax.plot(T, curve, color=color, zorder=-10)
-        ax.fill_between(T, curve, color=color, alpha=.1, zorder=-20)
-
-    ax.legend(loc='upper left')
-
-
-@plot
-def region_bulk():
-    _region_bulk()
-
-
-@plot
-def region_bulk_empty():
-    _region_bulk('empty')
-
-
-@plot
-def region_bulk_examples():
-    _region_bulk('examples', scale=.5)
-
-
-@plot
-def flow_corr():
-    """
-    Symmetric cumulants SC(m, n) at the MAP point compared to experiment.
-
-    """
-    fig, axes = plt.subplots(
-        figsize=(textwidth, .75*textwidth),
-        nrows=2, ncols=2, gridspec_kw=dict(width_ratios=[2, 3])
-    )
-
-    cmapx_normal = .7
-    cmapx_pred = .5
-    dashes_pred = [3, 2]
-
-    def label(*mn, normed=False):
-        fmt = r'\mathrm{{SC}}({0}, {1})'
-        if normed:
-            fmt += r'/\langle v_{0}^2 \rangle\langle v_{1}^2 \rangle'
-        return fmt.format(*mn).join('$$')
-
-    for obs, ax in zip(
-            ['sc_central', 'sc', 'sc_normed_central', 'sc_normed'],
-            axes.flat
-    ):
-        for (mn, cmap), sys in itertools.product(
-                [
-                    ((4, 2), 'Blues'),
-                    ((3, 2), 'Oranges'),
-                ],
-                systems
-        ):
-            x = model.map_data[sys][obs][mn]['x']
-            y = model.map_data[sys][obs][mn]['Y']
-
-            pred = obs not in expt.data[sys]
-            cmapx = cmapx_pred if pred else cmapx_normal
-
-            kwargs = {}
-
-            if pred:
-                kwargs.update(dashes=dashes_pred)
-
-            if ax.is_first_col() and ax.is_first_row():
-                fmt = '{:.2f} TeV'
-                if pred:
-                    fmt += ' (prediction)'
-                lbl = fmt.format(parse_system(sys)[1]/1000)
-                if not any(l.get_label() == lbl for l in ax.get_lines()):
-                    ax.add_line(lines.Line2D(
-                        [], [], color=plt.cm.Greys(cmapx),
-                        label=lbl, **kwargs
-                    ))
-            elif ax.is_last_col() and not pred:
-                kwargs.update(label=label(*mn, normed='normed' in obs))
-
-            ax.plot(
-                x, y, lw=.75,
-                color=getattr(plt.cm, cmap)(cmapx),
-                **kwargs
-            )
-
-            if pred:
-                continue
-
-            x = expt.data[sys][obs][mn]['x']
-            y = expt.data[sys][obs][mn]['y']
-            yerr = expt.data[sys][obs][mn]['yerr']
-
-            ax.errorbar(
-                x, y, yerr=yerr['stat'],
-                fmt='o', ms=2, capsize=0, color='.25', zorder=100
-            )
-
-            ax.fill_between(
-                x, y - yerr['sys'], y + yerr['sys'],
-                color='.9', zorder=-10
-            )
-
-        ax.axhline(
-            0, color='.75', lw=plt.rcParams['xtick.major.width'],
-            zorder=-100
-        )
-
-        ax.set_xlim(0, 10 if 'central' in obs else 70)
-
-        auto_ticks(ax, nbins=6, minor=2)
-
-        ax.legend(loc='best')
-
-        if ax.is_first_col():
-            ax.set_ylabel(label('m', 'n', normed='normed' in obs))
-
-        if ax.is_first_row():
-            ax.set_title(
-                'Most central collisions'
-                if 'central' in obs else
-                'Minimum bias'
-            )
-        else:
-            ax.set_xlabel('Centrality %')
-
-
-@plot
-def flow_extra():
-    """
-    vn{2} in central bins and v2{4}.
-
-    """
-    plots, width_ratios = zip(*[
-        (('vnk_central', 'Central two-particle cumulants', r'$v_n\{2\}$'), 2),
-        (('vnk', 'Four-particle cumulants', r'$v_2\{4\}$'), 3),
-    ])
-
-    fig, axes = plt.subplots(
-        figsize=(textwidth, .42*textwidth),
-        ncols=len(plots), gridspec_kw=dict(width_ratios=width_ratios)
-    )
-
-    cmaps = {2: plt.cm.GnBu, 3: plt.cm.Purples}
-
-    for (obs, title, ylabel), ax in zip(plots, axes):
-        for sys, (cmapx, dashes, fmt) in zip(
-                systems, [
-                    (.7, (None, None), 'o'),
-                    (.6, (3, 2), 's'),
-                ]
-        ):
-            syslabel = '{:.2f} TeV'.format(parse_system(sys)[1]/1000)
-            for subobs, dset in model.map_data[sys][obs].items():
-                x = dset['x']
-                y = dset['Y']
-
-                ax.plot(
-                    x, y,
-                    color=cmaps[subobs](cmapx), dashes=dashes,
-                    label='Model ' + syslabel
-                )
-
-                try:
-                    dset = expt.data[sys][obs][subobs]
-                except KeyError:
-                    continue
-
-                x = dset['x']
-                y = dset['y']
-                yerr = dset['yerr']
-
-                ax.errorbar(
-                    x, y, yerr=yerr['stat'],
-                    fmt=fmt, ms=2.2, capsize=0, color='.25', zorder=100,
-                    label='ALICE ' + syslabel
-                )
-
-                ax.fill_between(
-                    x, y - yerr['sys'], y + yerr['sys'],
-                    color='.9', zorder=-10
-                )
-
-                if obs == 'vnk_central':
-                    ax.text(
-                        x[-1] + .15, y[-1], '$v_{}$'.format(subobs),
-                        color=cmaps[subobs](.99), ha='left', va='center'
-                    )
-
-        auto_ticks(ax, 'y', minor=2)
-        ax.set_xlim(0, dset['cent'][-1][1])
-
-        ax.set_xlabel('Centrality %')
-        ax.set_ylabel(ylabel)
-        ax.set_title(title)
-
-    ax.legend(loc='lower right')
 
 
 @plot
@@ -1290,7 +941,7 @@ def design():
 
     d = Design(systems[0])
 
-    keys = ('log_scale', 'qhat_A')
+    keys = ('scale', 'qhat_A')
     indices = tuple(d.keys.index(k) for k in keys)
 
     x, y = (d.array[:, i] for i in indices)
@@ -1299,7 +950,7 @@ def design():
     hist_kw = dict(bins=30, color=plt.cm.Blues(0.4), edgecolor='white', lw=.5)
     ax_x.hist(x, **hist_kw)
     ax_y.hist(y, orientation='horizontal', **hist_kw)
-    
+
     for ax in fig.axes:
         ax.tick_params(top='off', right='off')
         spines = ['top', 'right']
@@ -1318,12 +969,12 @@ def design():
         ax.tick_params(labelbottom='off', labelleft='off')
 
     for i, xy in zip(indices, 'xy'):
-        for f, l in [('lim', d.range), ('label', [a[1:-1] for a in d.labels])]:
+        for f, l in [('lim', d.range), ('label', d.labels)]:
             attr = 'set_{}{}'.format(xy, f)
             arg = l[i]
             print(attr, l, l[i])
             getattr(ax_j, attr)(arg)
-    
+
 
 @plot
 def gp():
@@ -1332,7 +983,7 @@ def gp():
 
     """
     fig, axes = plt.subplots(
-        figsize=(.45*textwidth, .85*textheight),
+        figsize=(.47*textwidth, .9*textheight),
         nrows=2, sharex='col'
     )
 
@@ -1381,7 +1032,6 @@ def gp():
         (std, 'Uncertainty'),
         (training_data, 'Training data'),
     ]), loc='lower left')
-
     set_tight(fig, h_pad=1)
 
 
@@ -1396,13 +1046,15 @@ def pca():
     ax_y = fig.add_subplot(gs[1:, -1], sharey=ax_j)
 
     x, y = (
-        model.data['PbPb2760'][obs][subobs]['Y'][:, 3]
-        for obs, subobs in [('dN_dy', 'pion'), ('vnk', (2, 2))]
+        model.data['PbPb5020']['EPS09'][obs][specie][cent]['Y'][:, index]
+        for obs, specie, cent, index in [('RAA', 'D0', '0-10', 5),
+                                          ('V2', 'D0', '30-50', 2)]
     )
-    xlabel = r'$dN_{\pi^\pm}/dy$'
-    ylabel = r'$v_2\{2\}$'
-    xlim = 0, 1500
-    ylim = 0, 0.15
+    x = np.log(x)
+    xlabel = r'$R_{AA}, 0-10\%, 8 < p_T < 10$ [GeV]'
+    ylabel = r'$v_2\{2\}, 30-50\%, 2 < p_T < 3$ [GeV]'
+    xlim = -4, 0
+    ylim = 0.05, 0.3
 
     cmap = plt.cm.Blues
 
@@ -1410,7 +1062,7 @@ def pca():
 
     for d, ax, orientation in [(x, ax_x, 'vertical'), (y, ax_y, 'horizontal')]:
         ax.hist(
-            d, bins=20,
+            d, bins=10,
             orientation=orientation, color=cmap(.4), edgecolor='white'
         )
 
@@ -1427,8 +1079,11 @@ def pca():
     )
 
     for w, p in zip(pca.explained_variance_ratio_, pc):
+        print(w)
         if np.all(p < 0):
             p *= -1
+        p = p/(p**2).sum()**0.25*0.8
+        print(p)
         ax_j.annotate(
             '', xymean + p, xymean, zorder=20,
             arrowprops=dict(
@@ -1437,7 +1092,7 @@ def pca():
             )
         )
         ax_j.text(
-            *(xymean + p + (.8, .002)*np.sign(p)), s='{:.0f}%'.format(100*w),
+            *(xymean + p + (.1, .002)*np.sign(p)), s='{:.0f}%'.format(100*w),
             color=offblack, ha='center', va='top' if p[1] < 0 else 'bottom',
             zorder=20
         )
@@ -1761,7 +1416,7 @@ def diag_pca(system=default_system, nPDF=default_nPDF):
     fig, axes = plt.subplots(nrows=n, ncols=n, figsize=2*(n,))
 
     for y, ax in zip(Y, axes.diagonal()):
-        ax.hist(y, bins=30)
+        ax.hist(y, bins=10)
         ax.set_xlim(lim)
 
     for ny, nx in zip(*np.tril_indices_from(axes, k=-1)):
@@ -1803,7 +1458,7 @@ def diag_emu(system=default_system, nPDF=default_nPDF):
         y = gp.y_train_
 
         for nx, (x, label, xlim, ax) in enumerate(zip(
-                gp.X_train_.T, [l[1:-1] for l in design.labels], design.range, row
+                gp.X_train_.T, design.labels, design.range, row
         )):
             ax.plot(x, y, 'o', ms=.8, color='.75', zorder=10)
 
