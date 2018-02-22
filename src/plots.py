@@ -795,7 +795,7 @@ def _posterior(
             for p in ps.T:
                 print(np.exp(p[0]), '\t', np.exp(p[1])-1., '\t',
     				 np.exp(p[2])-1., file=f)
-    if 'scale' in keys:
+    """if 'scale' in keys:
         key = 'scale'
         for nPDF in nPDFs:
             data[nPDF][keys.index(key)] = \
@@ -816,6 +816,7 @@ def _posterior(
                             np.exp(data[nPDF][keys.index(key)])-1.
         ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
         labels[keys.index(key)] = r'$B$'
+	"""
 
     cmap1 = plt.get_cmap('Reds')
     cmap1.set_bad('white')

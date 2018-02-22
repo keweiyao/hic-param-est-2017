@@ -4,5 +4,9 @@
 *.pkl
 *.pyc
 *.hdf5
+*.pdf
 slides/
 input*/
+!prelim-exp/*
+!cache/emulator/*
+!cache/hepdata/*
