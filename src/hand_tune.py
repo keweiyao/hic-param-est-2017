@@ -16,9 +16,9 @@ class Application(tk.Frame):
         super().__init__(master)
         self.createWidgets()
         self.emu = {nPDF: Emulator('PbPb5020', nPDF) for nPDF in nPDFs}
-        self.A = 4.0
-        self.B = 4.0
-        self.M = 0.5
+        self.A = 1.0
+        self.B = 1.0
+        self.M = 1.0
         self.nPDF = 'nCTEQ' # default
 
     def toggle(self):
@@ -100,11 +100,11 @@ class Application(tk.Frame):
 
     def changeA(self, canvas, ax, final_update):
         if final_update:
-            self.A = self.tuneA.get()
+            self.A = np.log(1.+self.tuneA.get())
             self.plot(canvas, ax)
     def changeB(self, canvas, ax, final_update):
         if final_update:
-            self.B = self.tuneB.get()
+            self.B = np.log(1.+self.tuneB.get())
             self.plot(canvas, ax)
     def changeM(self, canvas, ax, final_update):
         if final_update:
