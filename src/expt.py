@@ -257,6 +257,7 @@ def _data():
         for i, cen in enumerate(['0-10', '30-50'], start=15):
             dset = HEPData(1394580, i).dataset('$R_{\\rm AA}$')
             data['PbPb2760']['RAA']['D-avg'].update({cen: dset})
+
         # 5) ALICE, Pb+Pb, RAA, c, b hadron to e+e-
         for i, cen in enumerate(['0-10', '10-20', '20-30',
                        '30-40', '40-50', '50-80'], start=7):
@@ -303,7 +304,8 @@ data = _data()
 
 
 def cov(
-        system1, obs1, specie1, cen1, system2, obs2, specie2, cen2,
+        system1, obs1, specie1, cen1, 
+		system2, obs2, specie2, cen2,
         stat_frac=1e-4, sys_corr_length=1, cross_factor=.5,
         corr_obs={
             frozenset({'dNch_deta', 'dET_deta', 'dN_dy'}),

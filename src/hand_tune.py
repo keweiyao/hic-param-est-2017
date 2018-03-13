@@ -4,13 +4,14 @@ from .emulator import Emulator
 import numpy as np
 import matplotlib
 matplotlib.use('Qt5Agg')
-import numpy as np
-import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import \
+				FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 import tkinter as tk
 
+# parameter transformation
 phy_to_design = { 
 'A': lambda x: np.log(1.+x),
 'B': lambda x: np.log(1.+x),
@@ -22,6 +23,7 @@ design_to_phy = {
 'B': lambda x: np.exp(x)-1.,
 'mu': lambda x: np.exp(x)
 } 
+
 
 class Application(tk.Frame):
     def __init__(self, Names, system='PbPb5020', master=None):
