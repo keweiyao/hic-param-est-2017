@@ -104,15 +104,16 @@ class Design:
     project, if not completely rewritten.
 
     """
-    def __init__(self, system, npoints=60, validation=False, seed=None):
+    def __init__(self, system, npoints=80, validation=False, seed=None):
         self.system = system
         self.projectiles, self.beam_energy = parse_system(system)
         self.type = 'validation' if validation else 'main'
 
         self.keys, labels, self.range = map(list, zip(*[
-            ('scale',	    '$\log\mu$',    (-0.5,	1.5)),
-			('qhat_A',		'$\log (1+A)$',	(0.01,	2.5)),
-            ('qhat_B',		'$\log (1+B)$',	(0.01,	2.5)),
+            ('tau_0',        '$\tau_0$',        (0.1, 1.0)),
+            ('mu',            '$\log\mu$',    (-1.1,    1.4)),
+            ('qhat_A',        '$\log (1+A)$',    (0.01,    1.6)),
+            ('qhat_B',        '$\log (1+B)$',    (0.01,    1.6)),
         ]))
 
         # convert labels into TeX:
@@ -138,21 +139,21 @@ class Design:
     def __array__(self):
         return self.array
 
-    _template = """collaboration = CMS
+    _template = """nevents = 4
 sqrts = {sqrts}
-trento_args = -x {cross_section} -n {normalization} -p 0.0 -k 1.0 -w 0.9
-tau_fs = 0.6
-vishnew_args = VisHRG=0.5 VisMin=0.06 VisSlope=2.0 VisCurv=0.05 VisBulkMax=0.015 VisBulkWidth=0.02
+trento_args = -x {cross_section} -n {normalization} -p 0.0 -k 1.2 -w 0.9 --ncoll
+tau_fs = 1.2
+xi_fs = {xi_fs}
+vishnew_args = stop=0.153 min=0.08 slope=1.1 curvature=-0.5 zetas_max=0.05 zetas_width=0.02 zetas_t0=0.180 iskip_t=4 iskip_xy=2
 Tswitch = 0.154
-new_table = False
-particle_type = {ptype}
-N_particles = {N_particles}
-ymax = 2.0
-transport = {transport}
-inelastic = {inelastic}
-scale = {scale}
-A = {qhatA}
-B = {qhatB}"""
+N_charm = {N_charm}
+N_bottom = {N_bottom}
+Emax = 200.
+pTmin = .5
+pTmax = 130.5
+mu = {mu}
+A = {qhat_A}
+B = {qhat_B}"""
 
     def write_files(self, basedir):
         """
@@ -163,21 +164,21 @@ B = {qhatB}"""
         outdir.mkdir(parents=True, exist_ok=True)
 
         for point, row in zip(self.points, self.array):
-            logmu = row[self.keys.index('scale')]
+            tau0 = row[self.keys.index('tau_0')]
+            logmu = row[self.keys.index('mu')]
             logqhatA = row[self.keys.index('qhat_A')]
             logqhatB = row[self.keys.index('qhat_B')]
             kwargs = {
                 "sqrts": self.beam_energy,
-                "ptype": 'c',
-                "N_particles": 40000,
-                "transport": 'Hybrid',
-                "inelastic": 'True',
-                "scale": np.exp(logmu),
-                "qhatA": np.exp(logqhatA)-1.,
-                "qhatB": np.exp(logqhatB)-1.,
+                "N_charm": 40000,
+				"N_bottom": 10000,
+                "xi_fs": tau0/1.2,
+                "mu": np.exp(logmu),
+                "qhat_A": np.exp(logqhatA)-1.,
+                "qhat_B": np.exp(logqhatB)-1.,
                 "normalization": {
-                    2760: 14.4,
-                    5020: 20.9,
+                    2760: 13.9,
+                    5020: 18.4,
                 }[self.beam_energy],
                 "cross_section": {
                     # sqrt(s) [GeV] : sigma_NN [fm^2]

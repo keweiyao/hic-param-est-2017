@@ -267,14 +267,28 @@ def _data():
 
     ####### SQRTS = 5020 GeV #####################
     if 'PbPb5020' in systems:
-        data['PbPb5020'].update({'V2': {'D-avg': {}, 'D0': {}},
-                                 'RAA': {'D0': {}}
-                                   })
+        data['PbPb5020']['ALICE'] =  {'V2': {'D-avg': {}},
+                                     'RAA': {'D-avg': {}}
+                                    }
+        data['PbPb5020']['CMS'] =  {'V2': {'D0': {}},
+                                     'RAA': {'D0': {}, 'B':{}}
+                                    }
         # 1) ALICE, Pb+Pb, meson flow
         dset = HEPData(1608612, 5).dataset('$v_2$')
-        data['PbPb5020']['V2']['D-avg'].update({'30-50': dset})
+        data['PbPb5020']['ALICE']['V2']['D-avg'].update({'30-50': dset})
 
-        # 2) Prelim Data! CMS, Pb+Pb, D0 flow
+        # 2) Prelim Data! ALICE, Pb+Pb, D Raa
+        for cen in ['0-10','30-50','60-80']:
+            pTL, pTH, raa, stat, sys = np.loadtxt(prelimdir/'ALICE-Raa-D-{}.dat'.format(cen)).T
+            dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
+                    'x' : (pTL+pTH)/2.,
+                    'y' : raa,
+                    'yerr': { 'stat': stat,
+                              'sys': sys}
+                    }
+            data['PbPb5020']['ALICE']['RAA']['D-avg'].update({cen: dset})
+
+        # 3) Prelim Data! CMS, Pb+Pb, D0 flow
         for cen in ['0-10','10-30','30-50']:
             pTL, pTH, v2, stat, sys1, sys2 = np.loadtxt(prelimdir/'CMS-v2-{}.dat'.format(cen)).T
             dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
@@ -284,9 +298,9 @@ def _data():
                               'sys': sys1,
                               'sys2': sys2}
                     }
-            data['PbPb5020']['V2']['D0'].update({cen: dset})
+            data['PbPb5020']['CMS']['V2']['D0'].update({cen: dset})
 
-        # 3) Prelim Data! CMS, Pb+Pb, D0 RAA
+        # 4) Prelim Data! CMS, Pb+Pb, D0 RAA
         for cen in ['0-10','0-100']:
             pTL, pTH, RAA, stat, syserror = np.loadtxt(prelimdir/'CMS-Raa-{}.dat'.format(cen)).T
             dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
@@ -295,17 +309,61 @@ def _data():
                     'yerr': { 'stat': stat,
                               'sys': syserror}
                     }
-            data['PbPb5020']['RAA']['D0'].update({cen: dset})
+            data['PbPb5020']['CMS']['RAA']['D0'].update({cen: dset})
+        # 5) Prelim Data! CMS, Pb+Pb, B+/- RAA
+        for cen in ['0-100']:
+            pTL, pTH, RAA, stat, syserror = np.loadtxt(prelimdir/'CMS-Raa-B-{}.dat'.format(cen)).T
+            dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
+                    'x' : (pTL+pTH)/2.,
+                    'y' : RAA,
+                    'yerr': { 'stat': stat,
+                              'sys': syserror}
+                    }
+            data['PbPb5020']['CMS']['RAA']['B'].update({cen: dset})
+
 
     return data
+
+
+def _baseline_data():
+    """
+    Curate the experimental data using the `HEPData` class and return a nested
+    dict with levels
+
+    - system
+    - observable
+    - subobservable
+    - dataset (created by :meth:`HEPData.dataset`)
+
+    For example, ``data['PbPb2760']['dN_dy']['pion']`` retrieves the dataset
+    for pion dN/dy in Pb+Pb collisions at 2.76 TeV.
+
+    Some observables, such as charged-particle multiplicity, don't have a
+    natural subobservable, in which case the subobservable is set to `None`.
+
+    The best way to understand the nested dict structure is to explore the
+    object in an interactive Python session.
+
+    """
+    data = {'pp7000': {}}
+
+
+    ####### SQRTS = 7000 GeV #####################
+    data['pp7000'].update({'dX/dp/dy': {}})
+    # 1) Particle spectra
+    for i, D in enumerate(['D0', 'D+', 'D*'], start=1):
+        dset = HEPData(1511870, i+1).dataset('d$\\sigma$/d $p_{\\rm{T}}$dy')
+        data['pp7000']['dX/dp/dy'][D] = {'MB': dset}
+
+
 #: A nested dict containing all the experimental data, created by the
 #: :func:`_data` function.
 data = _data()
 
 
 def cov(
-        system1, obs1, specie1, cen1, 
-		system2, obs2, specie2, cen2,
+        system1, exp1, obs1, specie1, cen1,
+        system2, exp2, obs2, specie2, cen2,
         stat_frac=1e-4, sys_corr_length=1, cross_factor=.5,
         corr_obs={
             frozenset({'dNch_deta', 'dET_deta', 'dN_dy'}),
@@ -337,8 +395,8 @@ def cov(
     since they are all related to particle / energy production.
 
     """
-    def unpack(system, obs, subobs, cen):
-        dset = data[system][obs][subobs][cen]
+    def unpack(system, exp, obs, subobs, cen):
+        dset = data[system][exp][obs][subobs][cen]
         yerr = dset['yerr']
 
         try:
@@ -350,12 +408,12 @@ def cov(
 
         return dset['x'], dset['y'], stat, sys
 
-    x1, y1, stat1, sys1 = unpack(system1, obs1, specie1, cen1)
-    x2, y2, stat2, sys2 = unpack(system2, obs2, specie2, cen2)
+    x1, y1, stat1, sys1 = unpack(system1, exp1, obs1, specie1, cen1)
+    x2, y2, stat2, sys2 = unpack(system2, exp2, obs2, specie2, cen2)
 
     if obs1 == obs2:
         same_obs = (system1==system2) and (specie1 == specie2) \
-                                      and (cen1 == cen2)
+                    and (cen1 == cen2) and (exp1==exp2)
     else:
         # check if obs are both in a correlated group
         if any({obs1, obs2} <= c for c in corr_obs):
@@ -424,7 +482,7 @@ def plot_data(d, indent=0):
 
 def test_cov():
     covm = cov(
-        'PbPb5020', 'V2', 'D0', '0-10', 'PbPb5020', 'V2', 'D0', '0-10',
+        'PbPb5020', 'CMS', 'V2', 'D0', '0-10', 'PbPb5020', 'CMS', 'V2', 'D0', '0-10',
         stat_frac=1e-2, sys_corr_length=100, cross_factor=.5, norm_by_y=False)
     import matplotlib.pyplot as plt
     plt.imshow(np.flipud(covm.T))
@@ -433,5 +491,8 @@ def test_cov():
 
 if __name__ == '__main__':
     print_data(data)
-    #plot_data(data)
-    #test_cov()
+    import pickle
+    with open('exp.pkl','bw') as f:
+        pickle.dump(data, f)
+    plot_data(data['PbPb5020'])
+    test_cov()

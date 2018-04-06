@@ -39,11 +39,11 @@ class _Covariance:
         self._slices = slices
 
     def __getitem__(self, key):
-        (obs1, specie1, cent1), (obs2, specie2, cent2) = key
+        (exp1, obs1, specie1, cent1), (exp2, obs2, specie2, cent2) = key
         return self.array[
             ...,
-            self._slices[obs1][specie1][cent1],
-            self._slices[obs2][specie2][cent2]
+            self._slices[exp1][obs1][specie1][cent1],
+            self._slices[exp2][obs2][specie2][cent2]
         ]
 
 
@@ -68,8 +68,11 @@ class Emulator:
     #: Observables to emulate as a list of 2-tuples
     #: ``(obs, [list of subobs])``.
     observables = [
-        ('RAA', 'D0', ['0-10', '0-100']),
-        ('V2', 'D0', ['0-10', '10-30', '30-50']),
+        ('CMS', 'RAA', 'D0', ['0-10', '0-100']),
+        ('CMS', 'RAA', 'B', ['0-100']),
+        ('CMS', 'V2', 'D0', ['0-10', '10-30', '30-50']),
+        ('ALICE', 'RAA', 'D-avg', ['0-10', '30-50', '60-80']),
+        ('ALICE', 'V2', 'D-avg', ['30-50']),
     ]
 
     def __init__(self, system, nPDF, npc=10, nrestarts=0):
@@ -79,22 +82,21 @@ class Emulator:
         )
 
         Y = []
-        self._slices = {}
+        self._slices = {'CMS':{'RAA':{},'V2':{}}, 'ALICE':{'RAA':{},'V2':{}}}
 
         # Build an array of all observables to emulate.
         nobs = 0
-        for obs, specie, cenlist in self.observables:
-            self._slices[obs] = {specie: {} }
+        for exp, obs, specie, cenlist in self.observables:
+            self._slices[exp][obs][specie] = {}
             for cen in cenlist:
-                # take the log of RAA
-                raw = model.data[system][nPDF][obs][specie][cen]['Y']
-                #if obs == 'RAA':
-                #    raw = np.log(raw)
+                raw = model.data[system][nPDF][exp][obs][specie][cen]['Y']
+                print(raw.shape ,'d')
                 Y.append(raw)
                 n = Y[-1].shape[1]
-                self._slices[obs][specie][cen] = slice(nobs, nobs + n)
+                self._slices[exp][obs][specie][cen] = slice(nobs, nobs + n)
                 nobs += n
-
+        for iY in Y:
+            print(len(iY.shape))
         Y = np.concatenate(Y, axis=1)
 
         self.npc = npc
@@ -205,12 +207,14 @@ class Emulator:
         Y = np.dot(Z, self._trans_matrix[:Z.shape[-1]])
         Y += self.scaler.mean_
         res = {}
-        for obs, s2 in self._slices.items():
-            res[obs] = {}
-            for specie, s1 in s2.items():
-                res[obs][specie] = {}
-                for cent, s in s1.items():
-                    res[obs][specie][cent] = Y[..., s]
+        for exp, s3 in self._slices.items():
+            res[exp] = {}
+            for obs, s2 in s3.items():
+                res[exp][obs] = {}
+                for specie, s1 in s2.items():
+                    res[exp][obs][specie] = {}
+                    for cent, s in s1.items():
+                        res[exp][obs][specie][cent] = Y[..., s]
         return res
 
     def predict(self, X, return_cov=False, extra_std=0):
@@ -259,9 +263,6 @@ class Emulator:
         mean = self._inverse_transform(
             np.concatenate([m[:, np.newaxis] for m in gp_mean], axis=1)
         )
-        # take RAA back from log(RAA)
-        #mean['RAA']['D0']['0-10'] = np.exp(mean['RAA']['D0']['0-10'])
-        #mean['RAA']['D0']['0-100'] = np.exp(mean['RAA']['D0']['0-100'])
         if return_cov:
             # Build array of the GP predictive variances at each sample point.
             # shape: (nsamples, npc)

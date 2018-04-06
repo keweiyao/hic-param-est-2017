@@ -125,11 +125,14 @@ class Chain:
     #: Each observable is checked for each system
     #: and silently ignored if not found
     observables = [
-        ('RAA', 'D0', ['0-10', '0-100']),
-        ('V2', 'D0', ['0-10', '10-30', '30-50']),
+        ('CMS', 'RAA', 'D0', ['0-10', '0-100']),
+        ('CMS', 'RAA', 'B', ['0-100']),
+        ('CMS', 'V2', 'D0', ['0-10', '10-30', '30-50']),
+        ('ALICE', 'RAA', 'D-avg', ['0-10', '30-50', '60-80']),
+        ('ALICE', 'V2', 'D-avg', ['30-50']),
     ]
 
-    def __init__(self, path=workdir / 'mcmc' / 'chain-20180213.hdf', nPDF='nCTEQ'):
+    def __init__(self, path=workdir / 'mcmc' / 'chain.hdf', nPDF='EPPS'):
         self.path = path
         self.path.parent.mkdir(exist_ok=True)
         self.nPDF = nPDF
@@ -164,9 +167,9 @@ class Chain:
 
             self._slices[sys] = []
 
-            for obs, specie, cenlist in self.observables:
+            for exp, obs, specie, cenlist in self.observables:
                 try:
-                    obsdata = sysdata[obs][specie]
+                    obsdata = sysdata[exp][obs][specie]
                 except KeyError:
                     continue
 
@@ -178,19 +181,19 @@ class Chain:
 
                     n = dset['y'].size
                     self._slices[sys].append(
-                        (obs, specie, cen, slice(nobs, nobs + n))
+                        (exp, obs, specie, cen, slice(nobs, nobs + n))
                     )
                     nobs += n
 
             self._expt_y[sys] = np.empty(nobs)
             self._expt_cov[sys] = np.empty((nobs, nobs))
 
-            for obs1, specie1, cen1, slc1 in self._slices[sys]:
-                self._expt_y[sys][slc1] = expt.data[sys][obs1][specie1][cen1]['y']
-                for obs2, specie2, cen2, slc2 in self._slices[sys]:
+            for exp1, obs1, specie1, cen1, slc1 in self._slices[sys]:
+                self._expt_y[sys][slc1] = expt.data[sys][exp1][obs1][specie1][cen1]['y']
+                for exp2, obs2, specie2, cen2, slc2 in self._slices[sys]:
                     self._expt_cov[sys][slc1, slc2] = expt.cov(
-                        sys, obs1, specie1, cen1, 
-                        sys, obs2, specie2, cen2
+                        sys, exp1, obs1, specie1, cen1, 
+                        sys, exp2, obs2, specie2, cen2
                     )
 
     def _predict(self, X, **kwargs):
@@ -240,11 +243,11 @@ class Chain:
                 model_Y, model_cov = pred[sys]
 
                 # copy predictive mean and covariance into allocated arrays
-                for obs1, specie1, cen1, slc1 in self._slices[sys]:
-                    dY[:, slc1] = model_Y[obs1][specie1][cen1]
-                    for obs2, specie2, cen2, slc2 in self._slices[sys]:
+                for exp1, obs1, specie1, cen1, slc1 in self._slices[sys]:
+                    dY[:, slc1] = model_Y[exp1][obs1][specie1][cen1]
+                    for exp2, obs2, specie2, cen2, slc2 in self._slices[sys]:
                         cov[:, slc1, slc2] = \
-                            model_cov[(obs1, specie1, cen1), (obs2, specie2, cen2)]
+                            model_cov[(exp1, obs1, specie1, cen1), (exp2, obs2, specie2, cen2)]
 
                 # subtract expt data from model data
                 dY -= self._expt_y[sys]

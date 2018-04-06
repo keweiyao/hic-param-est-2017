@@ -28,7 +28,7 @@ prelimdir = workdir / 'prelim-exp'
 #systems = ['pp7000', 'PbPb2760', 'PbPb5020']
 #systems = ['PbPb2760', 'PbPb5020']
 systems = ['PbPb5020']
-nPDFs = ['EPS09','nCTEQ']
+nPDFs = ['EPPS','nCTEQ']
 
 def parse_system(system):
     """
