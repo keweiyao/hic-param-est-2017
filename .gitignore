@@ -9,7 +9,7 @@ mcmc/
 slides/
 input*/
 prelim-exp/*
-#prelim-exp/*/
+prelim-exp/*/
 cache/emulator/*
 cache/hepdata/*
 model_output/main/PbPb5020/*

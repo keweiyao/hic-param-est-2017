@@ -72,7 +72,7 @@ class Emulator:
         ('CMS', 'RAA', 'B', ['0-100']),
         ('CMS', 'V2', 'D0', ['0-10', '10-30', '30-50']),
         ('ALICE', 'RAA', 'D-avg', ['0-10', '30-50', '60-80']),
-        ('ALICE', 'V2', 'D-avg', ['30-50']),
+        ('ALICE', 'V2', 'D-avg', ['30-50','30-50-L','30-50-H']),
     ]
 
     def __init__(self, system, nPDF, npc=10, nrestarts=0):

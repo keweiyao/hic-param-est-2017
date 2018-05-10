@@ -93,7 +93,7 @@ class HEPData:
         except AttributeError:
             pass
 
-        for name in ['PT', 'electron $\\it{p}_{T} (GeV/\\it{c})$',
+        for name in ['PT (GeV)', 'PT', 'electron $\\it{p}_{T} (GeV/\\it{c})$',
                       '$p_{\\rm T}$', '<pT> +-(dx)']:
             x = self.x(name, case=False)
 
@@ -110,8 +110,9 @@ class HEPData:
                 mids = [v['value'] for v in x]
                 width = set(a - b for a, b in zip(mids[1:], mids[:-1]))
                 if len(width) > 1:
-                    raise RuntimeError('variable bin widths')
-                d = width.pop() / 2
+                    d = 1
+                else:
+                    d = width.pop() / 2
                 pT = [(m - d, m + d) for m in mids]
             else:
                 ll = [re.split(' |\+|\,-', v['value']) for v in x]
@@ -190,14 +191,28 @@ class HEPData:
 
 
                 yerr[err.get('label', 'sum')].append(e)
-
+        pT = np.array(pT)
+        x=np.array([(a + b)/2 for (a, b) in pT])
         return dict(
             pT=pT,
-            x=np.array([(a + b)/2 for a, b in pT]),
+            x=x,
             y=np.array(y),
             yerr={k: np.array(v) for k, v in yerr.items()},
         )
 
+def cut(d, pTcut=10.):
+    for k in sorted(d):
+        v = d[k]
+        for a in v:
+            for b in v[a]:
+                for c in v[a][b]:
+                    iv = v[a][b][c]
+                    cut = iv['x']>pTcut
+                    iv['x'] = iv['x'][cut]
+                    iv['y'] = iv['y'][cut]
+                    iv['pT'] = iv['pT'][cut]
+                    iv['yerr']['stat'] = iv['yerr']['stat'][cut]
+                    iv['yerr']['sys'] = iv['yerr']['sys'][cut]
 
 def _data():
     """
@@ -280,7 +295,7 @@ def _data():
         # 2) Prelim Data! ALICE, Pb+Pb, D Raa
         for cen in ['0-10','30-50','60-80']:
             pTL, pTH, raa, stat, sys = np.loadtxt(prelimdir/'ALICE-Raa-D-{}.dat'.format(cen)).T
-            dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
+            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : raa,
                     'yerr': { 'stat': stat,
@@ -288,22 +303,33 @@ def _data():
                     }
             data['PbPb5020']['ALICE']['RAA']['D-avg'].update({cen: dset})
 
+        for cen in ['30-50-L','30-50-H']:
+            pTL, pTH, raa, stat, sys = np.loadtxt(prelimdir/'ALICE-V2-D-{}.dat'.format(cen)).T
+            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
+                    'x' : (pTL+pTH)/2.,
+                    'y' : raa,
+                    'yerr': { 'stat': stat,
+                              'sys': sys}
+                    }
+            data['PbPb5020']['ALICE']['V2']['D-avg'].update({cen: dset})
+
+
         # 3) Prelim Data! CMS, Pb+Pb, D0 flow
         for cen in ['0-10','10-30','30-50']:
             pTL, pTH, v2, stat, sys1, sys2 = np.loadtxt(prelimdir/'CMS-v2-{}.dat'.format(cen)).T
-            dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
+            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : v2,
                     'yerr': { 'stat': stat,
                               'sys': sys1,
-                              'sys2': sys2}
+                              }#'sys2': sys2}
                     }
             data['PbPb5020']['CMS']['V2']['D0'].update({cen: dset})
 
         # 4) Prelim Data! CMS, Pb+Pb, D0 RAA
         for cen in ['0-10','0-100']:
             pTL, pTH, RAA, stat, syserror = np.loadtxt(prelimdir/'CMS-Raa-{}.dat'.format(cen)).T
-            dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
+            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : RAA,
                     'yerr': { 'stat': stat,
@@ -313,7 +339,7 @@ def _data():
         # 5) Prelim Data! CMS, Pb+Pb, B+/- RAA
         for cen in ['0-100']:
             pTL, pTH, RAA, stat, syserror = np.loadtxt(prelimdir/'CMS-Raa-B-{}.dat'.format(cen)).T
-            dset = {'pT':[(pl, ph) for pl, ph in zip(pTL, pTH)],
+            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : RAA,
                     'yerr': { 'stat': stat,
@@ -321,7 +347,7 @@ def _data():
                     }
             data['PbPb5020']['CMS']['RAA']['B'].update({cen: dset})
 
-
+    #cut(data['PbPb5020'], 10.0)
     return data
 
 
@@ -345,30 +371,35 @@ def _baseline_data():
     object in an interactive Python session.
 
     """
-    data = {'pp7000': {}}
+    data = {'pp7000': {}, 'pp5020': {} }
 
 
     ####### SQRTS = 7000 GeV #####################
     data['pp7000'].update({'dX/dp/dy': {}})
     # 1) Particle spectra
     for i, D in enumerate(['D0', 'D+', 'D*'], start=1):
-        dset = HEPData(1511870, i+1).dataset('d$\\sigma$/d $p_{\\rm{T}}$dy')
+        dset = HEPData(1511870, i).dataset('d$\\sigma$/d $p_{\\rm{T}}$dy')
         data['pp7000']['dX/dp/dy'][D] = {'MB': dset}
 
+    data['pp5020'].update({'dX/dp/dy': {}})
+    # 1) Particle spectra
+    for i, B in enumerate(['B+'], start=1):
+        dset = HEPData(1599548, i).dataset('$\\frac{d \\sigma}{dp_{T}}$ (Pb/(GeV/C))')
+        dset['pT'] = [(7.,10.),(10.,15.),(15.,20.),(20.,30.),(30.,50.)]
+        data['pp5020']['dX/dp/dy'][B] = {'MB': dset}
+
+    return data
 
 #: A nested dict containing all the experimental data, created by the
 #: :func:`_data` function.
 data = _data()
+ppdata = _baseline_data()
 
 
 def cov(
         system1, exp1, obs1, specie1, cen1,
         system2, exp2, obs2, specie2, cen2,
-        stat_frac=1e-4, sys_corr_length=1, cross_factor=.5,
-        corr_obs={
-            frozenset({'dNch_deta', 'dET_deta', 'dN_dy'}),
-        },
-        norm_by_y=False
+        stat_frac=1e-4, log_pT_corr_length=.01, cross_factor=0.6,
 ):
     """
     Estimate a covariance matrix for the given system and pair of observables,
@@ -395,6 +426,7 @@ def cov(
     since they are all related to particle / energy production.
 
     """
+
     def unpack(system, exp, obs, subobs, cen):
         dset = data[system][exp][obs][subobs][cen]
         yerr = dset['yerr']
@@ -411,30 +443,25 @@ def cov(
     x1, y1, stat1, sys1 = unpack(system1, exp1, obs1, specie1, cen1)
     x2, y2, stat2, sys2 = unpack(system2, exp2, obs2, specie2, cen2)
 
-    if obs1 == obs2:
-        same_obs = (system1==system2) and (specie1 == specie2) \
+    same_obs = (obs1 == obs2) and (system1==system2) and (specie1 == specie2) \
                     and (cen1 == cen2) and (exp1==exp2)
-    else:
-        # check if obs are both in a correlated group
-        if any({obs1, obs2} <= c for c in corr_obs):
-            same_obs = False
-        else:
-            return np.zeros((x1.size, x2.size))
+    same_class = (obs1 == obs2) and (system1==system2) and (exp1==exp2)
+    if (not same_obs) and (not same_class):
+        return np.zeros([x1.size, x2.size])
 
     # compute the sys error covariance
     C = (
-        np.exp(-.5*(np.subtract.outer(x1, x2)/sys_corr_length)**2) *
+        np.exp(-.5*(np.subtract.outer(np.log(x1), np.log(x2))/log_pT_corr_length)**2) *
         np.outer(sys1, sys2)
     )
+
+    if (not same_obs) and same_class:
+        C *= cross_factor
 
     if same_obs:
         # add stat error to diagonal
         C.flat[::C.shape[0]+1] += stat1**2
-    else:
-        # reduce correlation for different observables
-        C *= cross_factor
-    if norm_by_y:
-        C /= np.abs(np.outer(y1, y2))
+        
     return C
 
 
@@ -480,19 +507,20 @@ def plot_data(d, indent=0):
                 plt.legend(framealpha=0)
                 plt.show()
 
+
 def test_cov():
     covm = cov(
-        'PbPb5020', 'CMS', 'V2', 'D0', '0-10', 'PbPb5020', 'CMS', 'V2', 'D0', '0-10',
-        stat_frac=1e-2, sys_corr_length=100, cross_factor=.5, norm_by_y=False)
+        'PbPb5020', 'CMS', 'RAA', 'D0', '0-10', 'PbPb5020', 'CMS', 'RAA', 'B', '0-100', )
     import matplotlib.pyplot as plt
     plt.imshow(np.flipud(covm.T))
     plt.colorbar()
     plt.show()
 
 if __name__ == '__main__':
-    print_data(data)
+    print_data(ppdata)
+    test_cov()
     import pickle
     with open('exp.pkl','bw') as f:
         pickle.dump(data, f)
     plot_data(data['PbPb5020'])
-    test_cov()
+    

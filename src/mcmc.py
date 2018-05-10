@@ -129,7 +129,7 @@ class Chain:
         ('CMS', 'RAA', 'B', ['0-100']),
         ('CMS', 'V2', 'D0', ['0-10', '10-30', '30-50']),
         ('ALICE', 'RAA', 'D-avg', ['0-10', '30-50', '60-80']),
-        ('ALICE', 'V2', 'D-avg', ['30-50']),
+        ('ALICE', 'V2', 'D-avg', ['30-50','30-50-L', '30-50-H']),
     ]
 
     def __init__(self, path=workdir / 'mcmc' / 'chain.hdf', nPDF='EPPS'):
@@ -252,6 +252,14 @@ class Chain:
                 # subtract expt data from model data
                 dY -= self._expt_y[sys]
 
+
+                # WK: change the expt cov a little bit
+                for exp1, obs1, specie1, cen1, slc1 in self._slices[sys]:
+                    for exp2, obs2, specie2, cen2, slc2 in self._slices[sys]:
+                        self._expt_cov[sys][slc1, slc2] = expt.cov(
+                        sys, exp1, obs1, specie1, cen1, 
+                        sys, exp2, obs2, specie2, cen2
+                    )
                 # add expt cov to model cov
                 cov += self._expt_cov[sys]
 
