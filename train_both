@@ -1,4 +1,0 @@
-#!/usr/bin/bash
-steps=$1
-python3 -m src.mcmc --nwalkers 30 --nburnsteps 2000 --status 1000 --nPDF EPPS $steps
-python3 -m src.mcmc --nwalkers 30 --nburnsteps 2000 --status 1000 --nPDF nCTEQ $steps

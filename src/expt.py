@@ -392,8 +392,8 @@ def _baseline_data():
 
 #: A nested dict containing all the experimental data, created by the
 #: :func:`_data` function.
-data = _data()
-ppdata = _baseline_data()
+data = {}#_data()
+ppdata = {}#_baseline_data()
 
 
 def cov(

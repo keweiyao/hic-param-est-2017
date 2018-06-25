@@ -328,71 +328,11 @@ def _observables_plots():
     ]
 
 @plot
-def raaDB():
-    fig, axes = plt.subplots(2,2,sharex=True, #sharey=True, 
-                            figsize=(0.5*fullwidth, 0.4*fullwidth))
-    axes = axes.flatten()
-    from JetCalc.ExpCut import cuts as ExpCut
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
-        p = f['00']
-        RaaD = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
-               'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
-        RaaB = {'y': p['CMS/EPPS/Raa/B+-/mean'].value[:,:],
-               'yerr': p['CMS/EPPS/Raa/B+-/yerr'].value[:,:] }
-
-    pTb = ExpCut['pred-pT']
-    pT = np.mean(pTb, axis=1)
-    pTbar = (pTb[:,1]-pTb[:,0])/2.
-    for ax, raa, specie, cen in zip(axes, [*RaaD['y'], RaaB['y'][0]], ['D']*3+['B'], [[0,10],[30,50],[60,80],[0,100]]):
-        color=cr if specie == 'D' else cb
-        line='-' if specie == 'D' else '--'
-        ax.plot(pT[1:], raa[1:], line, color=color, linewidth=1, label=specie)
-        if ax.is_first_col():
-            ax.set_ylabel(r"$R_{AA}$")
-        if ax.is_last_row():
-            ax.set_xlabel(r"$p_T$ [GeV]")
-        ax.set_ylim(0, 1.5)
-        ax.set_title("Pb+Pb {}-{}%".format(*cen))
-        ax.semilogx()
-
-    # plot ALICE Raa
-    for j, cen in enumerate(['0-10','30-50', '60-80']):
-        pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/ALICE-Raa-D-{}.dat".format(cen)).T
-        pT = (pTl+pTh)/2.
-        pTbar = (pTh-pTl)/2.
-        axes[j].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='ALICE, D' if j==0 else '', color='k', markersize=2, zorder=-1)
-        for ix, iw, iy, iysys in \
-            zip(pT, pTbar, y, ysys):
-            il, ih = iy-iysys, iy+iysys
-            axes[j].fill_between(
-                [ix-iw, ix+iw],
-                [il, il], [ih, ih],
-                zorder=-10,
-                facecolor='white', edgecolor='k'
-            )
-
-    # plot CMS Raa
-    ax = axes[3]
-    dset = expt.data['PbPb5020']['CMS']['RAA']['B']['0-100']
-    x = dset['x']
-    y = dset['y']
-    xerr = [(ph-pl)/2. for (pl, ph) in dset['pT']]
-    yerrstat = dset['yerr']['stat']
-    yerrstat = dset['yerr']['sys']
-    ax.errorbar(x, y, xerr=xerr, yerr=yerrstat, fmt='Dk', markersize=2, label='CMS, $B^{\pm}$')
-    for ix, iw, iy, iysys in \
-        zip(x, xerr, y, ysys):
-        il, ih = iy-iysys, iy+iysys
-        ax.fill_between(
-            [ix-iw, ix+iw],
-            [il, il], [ih, ih],
-            zorder=-10,
-            facecolor='white', edgecolor='k'
-        )
-    
-    axes[0].legend(loc='upper right')
-    axes[3].legend(loc='upper right')
-    set_tight(fig, rect=[0.02, 0, .99, 0.99])
+def prior_qhat():
+    fig, axes = plt.subplots(1,1,sharey=True, #sharex=True,
+                            figsize=(0.5*fullwidth, 0.5*fullwidth))
+    d = Design("PbPb")
+    print(d)    
 
 
 @plot

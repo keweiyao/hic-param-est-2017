@@ -1,15 +1,4 @@
-collaboration = CMS
-sqrts = 5020
-trento_args = -x 7.0 -n 20.9 -p 0.0 -k 1.0 -w 0.9
-tau_fs = 0.6
-vishnew_args = VisHRG=0.5 VisMin=0.06 VisSlope=2.0 VisCurv=0.05 VisBulkMax=0.015 VisBulkWidth=0.02
-Tswitch = 0.154
-new_table = False
-particle_type = c
-N_particles = 40000
-ymax = 2.0
-transport = Hybrid
-inelastic = True
-scale = 1.2753654988073928
-A = 8.305719609255904
-B = 0.6676713949069379
+q1 = 26.5249587258813
+q2 = 20.381100919264732
+q3 = 18.67415260635623
+q4 = 18.171176928600755
