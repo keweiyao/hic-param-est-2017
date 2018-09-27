@@ -56,56 +56,56 @@ fullheight = 270/resolution
 
 plt.rcdefaults()
 plt.rcParams.update({
-    'font.family': 'DejaVu Sans-Serif',
-    'font.sans-serif': ['Lato'],
-    'mathtext.fontset': 'custom',
-    'mathtext.default': 'it',
-    'mathtext.rm': 'sans',
-    'mathtext.it': 'sans:italic:medium',
-    'mathtext.cal': 'sans',
-    'font.size': fontnormal,
-    'legend.fontsize': fontnormal,
-    'axes.labelsize': fontnormal,
-    'axes.titlesize': fontlarge,
-    'xtick.labelsize': fontsmall,
-    'ytick.labelsize': fontsmall,
-    'font.weight': 400,
-    'axes.labelweight': 400,
-    'axes.titleweight': 400,
-    'lines.linewidth': .5,
-    'lines.markersize': 3,
-    'lines.markeredgewidth': 0,
-    'patch.linewidth': .5,
-    'axes.linewidth': .4,
-    'xtick.major.width': .4,
-    'ytick.major.width': .4,
-    'xtick.minor.width': .4,
-    'ytick.minor.width': .4,
-    'xtick.major.size': 1.2,
-    'ytick.major.size': 1.2,
-    'xtick.minor.size': .8,
-    'ytick.minor.size': .8,
-    'xtick.major.pad': 1.5,
-    'ytick.major.pad': 1.5,
-    'axes.formatter.limits': (-5, 5),
-    'axes.spines.top': False,
-    'axes.spines.right': False,
-    'axes.labelpad': 3,
-    'text.color': offblack,
-    'axes.edgecolor': offblack,
-    'axes.labelcolor': offblack,
-    'xtick.color': offblack,
-    'ytick.color': offblack,
-    'legend.numpoints': 1,
-    'legend.scatterpoints': 1,
-    'legend.frameon': False,
-    'image.cmap': 'Blues',
-    'image.interpolation': 'none',
-    'pdf.fonttype': 42
+	'font.family': 'DejaVu Sans-Serif',
+	'font.sans-serif': ['Lato'],
+	'mathtext.fontset': 'custom',
+	'mathtext.default': 'it',
+	'mathtext.rm': 'sans',
+	'mathtext.it': 'sans:italic:medium',
+	'mathtext.cal': 'sans',
+	'font.size': fontnormal,
+	'legend.fontsize': fontnormal,
+	'axes.labelsize': fontnormal,
+	'axes.titlesize': fontlarge,
+	'xtick.labelsize': fontsmall,
+	'ytick.labelsize': fontsmall,
+	'font.weight': 400,
+	'axes.labelweight': 400,
+	'axes.titleweight': 400,
+	'lines.linewidth': .5,
+	'lines.markersize': 3,
+	'lines.markeredgewidth': 0,
+	'patch.linewidth': .5,
+	'axes.linewidth': .4,
+	'xtick.major.width': .4,
+	'ytick.major.width': .4,
+	'xtick.minor.width': .4,
+	'ytick.minor.width': .4,
+	'xtick.major.size': 1.2,
+	'ytick.major.size': 1.2,
+	'xtick.minor.size': .8,
+	'ytick.minor.size': .8,
+	'xtick.major.pad': 1.5,
+	'ytick.major.pad': 1.5,
+	'axes.formatter.limits': (-5, 5),
+	'axes.spines.top': False,
+	'axes.spines.right': False,
+	'axes.labelpad': 3,
+	'text.color': offblack,
+	'axes.edgecolor': offblack,
+	'axes.labelcolor': offblack,
+	'xtick.color': offblack,
+	'ytick.color': offblack,
+	'legend.numpoints': 1,
+	'legend.scatterpoints': 1,
+	'legend.frameon': False,
+	'image.cmap': 'Blues',
+	'image.interpolation': 'none',
+	'pdf.fonttype': 42
 })
 cm1, cm2 = plt.cm.Blues(.8), plt.cm.Reds(.8)
 cb,co,cg,cr = plt.cm.Blues(.6), \
-    plt.cm.Oranges(.6), plt.cm.Greens(.6), plt.cm.Reds(.6)
+	plt.cm.Oranges(.6), plt.cm.Greens(.6), plt.cm.Reds(.6)
 offblack = '#262626'
 gray = '0.8'
 
@@ -117,1138 +117,1320 @@ plot_functions = {}
 
 
 def plot(f):
-    """
-    Plot function decorator.  Calls the function, does several generic tasks,
-    and saves the figure as the function name.
+	"""
+	Plot function decorator.  Calls the function, does several generic tasks,
+	and saves the figure as the function name.
 
-    """
-    def wrapper(*args, **kwargs):
-        logging.info('generating plot: %s', f.__name__)
-        f(*args, **kwargs)
+	"""
+	def wrapper(*args, **kwargs):
+		logging.info('generating plot: %s', f.__name__)
+		f(*args, **kwargs)
 
-        fig = plt.gcf()
+		fig = plt.gcf()
 
-        if not fig.get_tight_layout():
-            set_tight(fig)
+		if not fig.get_tight_layout():
+			set_tight(fig)
 
-        plotfile = plotdir / '{}.pdf'.format(f.__name__)
-        fig.savefig(str(plotfile))
-        logging.info('wrote %s', plotfile)
-        plt.close(fig)
+		plotfile = plotdir / '{}.pdf'.format(f.__name__)
+		fig.savefig(str(plotfile),dpi=300)
+		logging.info('wrote %s', plotfile)
+		plt.close(fig)
 
-    plot_functions[f.__name__] = wrapper
+	plot_functions[f.__name__] = wrapper
 
-    return wrapper
+	return wrapper
 
 
 def set_tight(fig=None, **kwargs):
-    """
-    Set tight_layout with a better default pad.
+	"""
+	Set tight_layout with a better default pad.
 
-    """
-    if fig is None:
-        fig = plt.gcf()
+	"""
+	if fig is None:
+		fig = plt.gcf()
 
-    kwargs.setdefault('pad', .1)
-    fig.set_tight_layout(kwargs)
+	kwargs.setdefault('pad', .1)
+	fig.set_tight_layout(kwargs)
 
 
 def auto_ticks(ax, axis='both', minor=False, **kwargs):
-    """
-    Convenient interface to matplotlib.ticker locators.
+	"""
+	Convenient interface to matplotlib.ticker locators.
 
-    """
-    axis_list = []
+	"""
+	axis_list = []
 
-    if axis in {'x', 'both'}:
-        axis_list.append(ax.xaxis)
-    if axis in {'y', 'both'}:
-        axis_list.append(ax.yaxis)
+	if axis in {'x', 'both'}:
+		axis_list.append(ax.xaxis)
+	if axis in {'y', 'both'}:
+		axis_list.append(ax.yaxis)
 
-    for axis in axis_list:
-        axis.get_major_locator().set_params(**kwargs)
-        if minor:
-            axis.set_minor_locator(ticker.AutoMinorLocator(minor))
+	for axis in axis_list:
+		axis.get_major_locator().set_params(**kwargs)
+		if minor:
+			axis.set_minor_locator(ticker.AutoMinorLocator(minor))
 
 
 def format_system(system):
-    """
-    Format a system string into a display name, e.g.:
+	"""
+	Format a system string into a display name, e.g.:
 
-    >>> format_system('PbPb2760')
-    'Pb+Pb 2.76 TeV'
+	>>> format_system('PbPb2760')
+	'Pb+Pb 2.76 TeV'
 
-    >>> format_system('AuAu200')
-    'Au+Au 200 GeV'
+	>>> format_system('AuAu200')
+	'Au+Au 200 GeV'
 
-    """
-    proj, energy = parse_system(system)
+	"""
+	proj, energy = parse_system(system)
 
-    if energy > 1000:
-        energy /= 1000
-        prefix = 'T'
-    else:
-        prefix = 'G'
+	if energy > 1000:
+		energy /= 1000
+		prefix = 'T'
+	else:
+		prefix = 'G'
 
-    return '{} {} {}eV'.format('+'.join(proj), energy, prefix)
+	return '{} {} {}eV'.format('+'.join(proj), energy, prefix)
 
 
 def darken(rgb, amount=.5):
-    """
-    Darken a color by the given amount in HSLuv space.
+	"""
+	Darken a color by the given amount in HSLuv space.
 
-    """
-    h, s, l = hsluv.rgb_to_hsluv(rgb)
-    return hsluv.hsluv_to_rgb((h, s, (1 - amount)*l))
+	"""
+	h, s, l = hsluv.rgb_to_hsluv(rgb)
+	return hsluv.hsluv_to_rgb((h, s, (1 - amount)*l))
 
 
 def obs_color_hsluv(obs, nPDF):
-    """
-    Return a nice color for the given observable in HSLuv space.
-    Use obs_color() to obtain an RGB color.
+	"""
+	Return a nice color for the given observable in HSLuv space.
+	Use obs_color() to obtain an RGB color.
 
-    """
-    if obs == 'RAA':
-        if nPDF == 'EPPS':
-            return 250, 90, 55
-        else:
-            return 130, 90, 55
+	"""
+	if obs == 'RAA':
+		if nPDF == 'EPPS':
+			return 250, 90, 55
+		else:
+			return 130, 90, 55
 
-    if 'V2' in obs:
-        if nPDF == 'EPPS':
-            return 250, 90, 55
-        else:
-            return 130, 90, 55
+	if 'V2' in obs:
+		if nPDF == 'EPPS':
+			return 250, 90, 55
+		else:
+			return 130, 90, 55
 
-    if obs == 'qhat':
-        if nPDF == 'EPPS':
-            return 250, 90, 55
-        else:
-            return 130, 90, 55
+	if obs == 'qhat':
+		if nPDF == 'EPPS':
+			return 250, 90, 55
+		else:
+			return 130, 90, 55
 
-    if obs == 'posterior':
-        if nPDF == 'EPPS':
-            return 250, 90, 55
-        else:
-            return 130, 90, 55
+	if obs == 'posterior':
+		if nPDF == 'EPPS':
+			return 250, 90, 55
+		else:
+			return 130, 90, 55
 
-    raise ValueError('unknown observable: {} {}'.format(obs, subobs))
+	raise ValueError('unknown observable: {} {}'.format(obs, subobs))
 
 
 def obs_color(obs, nPDF):
-    """
-    Return a nice color for the given observable.
+	"""
+	Return a nice color for the given observable.
 
-    """
-    return hsluv.hsluv_to_rgb(obs_color_hsluv(obs, nPDF))
+	"""
+	return hsluv.hsluv_to_rgb(obs_color_hsluv(obs, nPDF))
 
 
 def _observables_plots():
-    """
-    Metadata for observables plots.
+	"""
+	Metadata for observables plots.
 
-    """
+	"""
 
-    return [
-        dict(
-            title='V2',
-            ylabel=(
-                r'$v_{2}$'
-            ),
-            xscale='log',
-            xlim=(1, 24),
-            ylim=(-.05, 0.4),
-            height_ratio=1.0,
-            subplots=[
-                ('ALICE', 'V2', 'D-avg', '30-50', dict(label='30-50(%)', scale=1)),
-                ('ALICE', 'V2', 'D-avg', '30-50-L', dict(label='30-50(%) \n $q_2$ low', scale=1)),
-                ('ALICE', 'V2', 'D-avg', '30-50-H', dict(label='30-50(%) \n $q_2$ high', scale=1))
-            ]
-        ),
-        dict(
-            title='RAA',
-            ylabel=(
-                r'$R_{AA}$'
-            ),
-            xscale='log',
-            xlim=(1, 50),
-            ylim=(0, 1.2),
-            height_ratio=1.0,
-            subplots=[
-                ('ALICE', 'RAA', 'D-avg', '0-10', 
-                            dict(label='0-10(%)', scale=1)),
-                ('ALICE', 'RAA', 'D-avg', '30-50', 
-                            dict(label='30-50(%)', scale=1)),
-                ('ALICE', 'RAA', 'D-avg', '60-80', 
-                            dict(label='60-80(%)', scale=1)),
-            ]
-        ),
-        dict(
-            title='V2',
-            ylabel=(
-                r'$v_{2}$'
-            ),
-            xscale='log',
-            xlim=(1,40),
-            ylim=(-0.05, 0.25),
-            height_ratio=1.0,
-            subplots=[
-                ('CMS', 'V2', 'D0', '0-10', dict(label='0-10(%)', scale=1)),
-                ('CMS', 'V2', 'D0', '10-30', dict(label='10-30(%)', scale=1)),
-                ('CMS', 'V2', 'D0', '30-50', dict(label='30-50(%)', scale=1))
-            ]
-        ),
-        dict(
-            title='RAA',
-            ylabel=(
-                r'$R_{AA}$'
-            ),
-            xscale='log',
-            xlim=(1, 100),
-            ylim=(0, 1.2),
-            height_ratio=1.0,
-            subplots=[
-                ('CMS', 'RAA', 'D0', '0-10', dict(label='0-10(%)', scale=1)),
-                ('CMS', 'RAA', 'D0', '0-100', dict(label='0-100(%)', scale=1))
-            ]
-        ),
-        dict(
-            title='RAA',
-            ylabel=(
-                r'$R_{AA}$'
-            ),
-            xscale='log',
-            xlim=(1, 100),
-            ylim=(0, 1.2),
-            height_ratio=1.0,
-            subplots=[
-                ('CMS', 'RAA', 'B', '0-100', dict(label='0-100(%)', scale=1)),
-            ]
-        ),
-    ]
+	return [
+		dict(
+			title='V2',
+			ylabel=(
+				r'$v_{2}$'
+			),
+			xscale='log',
+			xlim=(1, 24),
+			ylim=(-.05, 0.4),
+			height_ratio=1.0,
+			subplots=[
+				('ALICE', 'V2', 'D-avg', '30-50', dict(label='30-50(%)', scale=1)),
+				('ALICE', 'V2', 'D-avg', '30-50-L', dict(label='30-50(%) \n $q_2$ low', scale=1)),
+				('ALICE', 'V2', 'D-avg', '30-50-H', dict(label='30-50(%) \n $q_2$ high', scale=1))
+			]
+		),
+		dict(
+			title='RAA',
+			ylabel=(
+				r'$R_{AA}$'
+			),
+			xscale='log',
+			xlim=(1, 50),
+			ylim=(0, 1.2),
+			height_ratio=1.0,
+			subplots=[
+				('ALICE', 'RAA', 'D-avg', '0-10', 
+							dict(label='0-10(%)', scale=1)),
+				('ALICE', 'RAA', 'D-avg', '30-50', 
+							dict(label='30-50(%)', scale=1)),
+				('ALICE', 'RAA', 'D-avg', '60-80', 
+							dict(label='60-80(%)', scale=1)),
+			]
+		),
+		dict(
+			title='V2',
+			ylabel=(
+				r'$v_{2}$'
+			),
+			xscale='log',
+			xlim=(1,40),
+			ylim=(-0.05, 0.25),
+			height_ratio=1.0,
+			subplots=[
+				('CMS', 'V2', 'D0', '0-10', dict(label='0-10(%)', scale=1)),
+				('CMS', 'V2', 'D0', '10-30', dict(label='10-30(%)', scale=1)),
+				('CMS', 'V2', 'D0', '30-50', dict(label='30-50(%)', scale=1))
+			]
+		),
+		dict(
+			title='RAA',
+			ylabel=(
+				r'$R_{AA}$'
+			),
+			xscale='log',
+			xlim=(1, 100),
+			ylim=(0, 1.2),
+			height_ratio=1.0,
+			subplots=[
+				('CMS', 'RAA', 'D0', '0-10', dict(label='0-10(%)', scale=1)),
+				('CMS', 'RAA', 'D0', '0-100', dict(label='0-100(%)', scale=1))
+			]
+		),
+		dict(
+			title='RAA',
+			ylabel=(
+				r'$R_{AA}$'
+			),
+			xscale='log',
+			xlim=(1, 100),
+			ylim=(0, 1.2),
+			height_ratio=1.0,
+			subplots=[
+				('CMS', 'RAA', 'B', '0-100', dict(label='0-100(%)', scale=1)),
+			]
+		),
+	]
 
 @plot
 def raaDB():
-    fig, axes = plt.subplots(2,2,sharex=True, #sharey=True, 
-                            figsize=(0.5*fullwidth, 0.4*fullwidth))
-    axes = axes.flatten()
-    from JetCalc.ExpCut import cuts as ExpCut
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
-        p = f['00']
-        RaaD = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
-               'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
-        RaaB = {'y': p['CMS/EPPS/Raa/B+-/mean'].value[:,:],
-               'yerr': p['CMS/EPPS/Raa/B+-/yerr'].value[:,:] }
+	fig, axes = plt.subplots(2,2,sharex=True, #sharey=True, 
+							figsize=(0.5*fullwidth, 0.4*fullwidth))
+	axes = axes.flatten()
+	from JetCalc.ExpCut import cuts as ExpCut
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
+		p = f['00']
+		RaaD = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
+			   'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
+		RaaB = {'y': p['CMS/EPPS/Raa/B+-/mean'].value[:,:],
+			   'yerr': p['CMS/EPPS/Raa/B+-/yerr'].value[:,:] }
 
-    pTb = ExpCut['pred-pT']
-    pT = np.mean(pTb, axis=1)
-    pTbar = (pTb[:,1]-pTb[:,0])/2.
-    for ax, raa, specie, cen in zip(axes, [*RaaD['y'], RaaB['y'][0]], ['D']*3+['B'], [[0,10],[30,50],[60,80],[0,100]]):
-        color=cr if specie == 'D' else cb
-        line='-' if specie == 'D' else '--'
-        ax.plot(pT[1:], raa[1:], line, color=color, linewidth=1, label=specie)
-        if ax.is_first_col():
-            ax.set_ylabel(r"$R_{AA}$")
-        if ax.is_last_row():
-            ax.set_xlabel(r"$p_T$ [GeV]")
-        ax.set_ylim(0, 1.5)
-        ax.set_title("Pb+Pb {}-{}%".format(*cen))
-        ax.semilogx()
+	pTb = ExpCut['pred-pT']
+	pT = np.mean(pTb, axis=1)
+	pTbar = (pTb[:,1]-pTb[:,0])/2.
+	for ax, raa, specie, cen in zip(axes, [*RaaD['y'], RaaB['y'][0]], ['D']*3+['B'], [[0,10],[30,50],[60,80],[0,100]]):
+		color=cr if specie == 'D' else cb
+		line='-' if specie == 'D' else '--'
+		ax.plot(pT[1:], raa[1:], line, color=color, linewidth=1, label=specie)
+		if ax.is_first_col():
+			ax.set_ylabel(r"$R_{AA}$")
+		if ax.is_last_row():
+			ax.set_xlabel(r"$p_T$ [GeV]")
+		ax.set_ylim(0, 1.5)
+		ax.set_title("Pb+Pb {}-{}%".format(*cen))
+		ax.semilogx()
 
-    # plot ALICE Raa
-    for j, cen in enumerate(['0-10','30-50', '60-80']):
-        pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/ALICE-Raa-D-{}.dat".format(cen)).T
-        pT = (pTl+pTh)/2.
-        pTbar = (pTh-pTl)/2.
-        axes[j].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='ALICE, D' if j==0 else '', color='k', markersize=2, zorder=-1)
-        for ix, iw, iy, iysys in \
-            zip(pT, pTbar, y, ysys):
-            il, ih = iy-iysys, iy+iysys
-            axes[j].fill_between(
-                [ix-iw, ix+iw],
-                [il, il], [ih, ih],
-                zorder=-10,
-                facecolor='white', edgecolor='k'
-            )
+	# plot ALICE Raa
+	for j, cen in enumerate(['0-10','30-50', '60-80']):
+		pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/ALICE-Raa-D-{}.dat".format(cen)).T
+		pT = (pTl+pTh)/2.
+		pTbar = (pTh-pTl)/2.
+		axes[j].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='ALICE, D' if j==0 else '', color='k', markersize=2, zorder=-1)
+		for ix, iw, iy, iysys in \
+			zip(pT, pTbar, y, ysys):
+			il, ih = iy-iysys, iy+iysys
+			axes[j].fill_between(
+				[ix-iw, ix+iw],
+				[il, il], [ih, ih],
+				zorder=-10,
+				facecolor='white', edgecolor='k'
+			)
 
-    # plot CMS Raa
-    ax = axes[3]
-    dset = expt.data['PbPb5020']['CMS']['RAA']['B']['0-100']
-    x = dset['x']
-    y = dset['y']
-    xerr = [(ph-pl)/2. for (pl, ph) in dset['pT']]
-    yerrstat = dset['yerr']['stat']
-    yerrstat = dset['yerr']['sys']
-    ax.errorbar(x, y, xerr=xerr, yerr=yerrstat, fmt='Dk', markersize=2, label='CMS, $B^{\pm}$')
-    for ix, iw, iy, iysys in \
-        zip(x, xerr, y, ysys):
-        il, ih = iy-iysys, iy+iysys
-        ax.fill_between(
-            [ix-iw, ix+iw],
-            [il, il], [ih, ih],
-            zorder=-10,
-            facecolor='white', edgecolor='k'
-        )
-    
-    axes[0].legend(loc='upper right')
-    axes[3].legend(loc='upper right')
-    set_tight(fig, rect=[0.02, 0, .99, 0.99])
+	# plot CMS Raa
+	ax = axes[3]
+	dset = expt.data['PbPb5020']['CMS']['RAA']['B']['0-100']
+	x = dset['x']
+	y = dset['y']
+	xerr = [(ph-pl)/2. for (pl, ph) in dset['pT']]
+	yerrstat = dset['yerr']['stat']
+	yerrstat = dset['yerr']['sys']
+	ax.errorbar(x, y, xerr=xerr, yerr=yerrstat, fmt='Dk', markersize=2, label='CMS, $B^{\pm}$')
+	for ix, iw, iy, iysys in \
+		zip(x, xerr, y, ysys):
+		il, ih = iy-iysys, iy+iysys
+		ax.fill_between(
+			[ix-iw, ix+iw],
+			[il, il], [ih, ih],
+			zorder=-10,
+			facecolor='white', edgecolor='k'
+		)
+	
+	axes[0].legend(loc='upper right')
+	axes[3].legend(loc='upper right')
+	set_tight(fig, rect=[0.02, 0, .99, 0.99])
 
 
 @plot
 def raa():
-    fig, axes = plt.subplots(1,5,sharey=True, #sharex=True, 
-                            figsize=(fullwidth, 0.24*fullwidth))
-    
-    from JetCalc.ExpCut import cuts as ExpCut
-    #######LHC###########################
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
-        p = f['00']
-        RaaD = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
-               'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
-        RaaB = {'y': p['ALICE/EPPS/Raa/B+-/mean'].value[:,:],
-               'yerr': p['ALICE/EPPS/Raa/B+-/yerr'].value[:,:] }
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-pPb.hdf5",'r') as f:
-        p = f['00']
-        RaaDpPb = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
-               'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
-        RaaBpPb = {'y': p['ALICE/EPPS/Raa/B+-/mean'].value[:,:],
-               'yerr': p['ALICE/EPPS/Raa/B+-/yerr'].value[:,:] }
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-pPb-no-shadowing.hdf5",'r') as f:
-        p = f['00']
-        RaaDpPbN = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
-               'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
-        RaaBpPbN = {'y': p['ALICE/EPPS/Raa/B+-/mean'].value[:,:],
-               'yerr': p['ALICE/EPPS/Raa/B+-/yerr'].value[:,:] }
-    pTb = ExpCut['pred-pT']
-    pT = np.mean(pTb, axis=1)
-    pTbar = (pTb[:,1]-pTb[:,0])/2.
-    for M, pid, v, color in zip([1.87, 5.28], ['D', 'B'], [RaaD, RaaB], [cr, cb]):
-        mfc = "none" if pid=='B' else color
-        line = '--' if pid=='B' else '-'
-        label = 'B'if pid =='B' else "D"
-        for j, cen in enumerate(ExpCut['ALICE']['Raa']['cenbins']):
-            axes[j].plot(pT[1:], v['y'][j,1:], line, color=color, 
-                            label=label if j==0 else '', linewidth=1)
-            axes[j].fill_between(pT[1:], v['y'][j,1:]-v['yerr'][j,1:],
-                                   v['y'][j,1:]+v['yerr'][j,1:], color=color,
-                                   alpha=0.3)
-            if axes[j].is_first_col():
-                axes[j].set_ylabel(r"$R_{AA}$")
-            axes[j].set_xlabel(r"$p_T$ [GeV]")
-            axes[j].set_ylim(0, 1.5)
-            #axes[j].set_title("Pb+Pb {}-{}%".format(*cen))
-            axes[j].annotate("Pb+Pb {}-{}%".format(*cen), xy=(0.25, 0.9), xycoords='axes fraction')
-            axes[j].semilogx()
-    # pPb
-    pl,ph,y,ystat,ysysp,ysysm = np.loadtxt('cache/hepdata/pPb-raa.dat').T
-                
-    axes[3].plot(pT[1:], RaaDpPb['y'][0,1:], '-', color=cr, linewidth=1)
-    axes[3].plot(pT[1:], RaaBpPb['y'][0,1:], '--', color=cb, linewidth=1)
-    axes[3].plot(pT[1:], RaaDpPbN['y'][0,1:], ':', color=cr, linewidth=2, label='D no shadow')
-    axes[3].set_xlabel(r"$p_T$ [GeV]")
-    axes[3].set_ylim(0, 1.5)
-    #axes[3].set_title("p+Pb 0-100%")
-    axes[3].annotate("p+Pb 0-100%", xy=(0.25, 0.9), xycoords='axes fraction')
-    axes[3].errorbar((ph+pl)/2, y, xerr=(ph-pl)/2, yerr=ystat, fmt='D', color='k', markersize=2, zorder=-1)
-    for ix, iw, iy, iysysp, iysysm in \
-        zip((ph+pl)/2, (ph-pl)/2, y, ysysp, ysysm):
-        il, ih = iy+iysysm, iy+iysysp
-        axes[3].fill_between(
-            [ix-iw, ix+iw],
-            [il, il], [ih, ih],
-            zorder=-10,
-            facecolor='white', edgecolor='k'
-        )
-        axes[3].semilogx()
-    
-    # plot ALICE Raa
-    for j, cen in enumerate(['0-10','30-50', '60-80']):
-        pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/ALICE-Raa-D-{}.dat".format(cen)).T
-        pT = (pTl+pTh)/2.
-        pTbar = (pTh-pTl)/2.
-        axes[j].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='ALICE, D' if j==0 else '', color='k', markersize=2, zorder=-1)
-        for ix, iw, iy, iysys in \
-            zip(pT, pTbar, y, ysys):
-            il, ih = iy-iysys, iy+iysys
-            axes[j].fill_between(
-                [ix-iw, ix+iw],
-                [il, il], [ih, ih],
-                zorder=-10,
-                facecolor='white', edgecolor='k'
-            )
-    #####RHIC##################
-    pTb = ExpCut['pred-pT-rhic']
-    pT = np.mean(pTb, axis=1)
-    pTbar = (pTb[:,1]-pTb[:,0])/2.
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-AuAu.hdf5",'r') as f:
-        p = f['00']
-        RaaDAuAu = {'y': p['STAR/EPPS/Raa/D+D*/mean'].value[:,:],
-               'yerr': p['STAR/EPPS/Raa/D+D*/yerr'].value[:,:] }
-        RaaBAuAu = {'y': p['STAR/EPPS/Raa/B+-/mean'].value[:,:],
-               'yerr': p['STAR/EPPS/Raa/B+-/yerr'].value[:,:] }
-    for M, pid, v, color in zip([1.87, 5.28], ['D', 'B'], [RaaDAuAu, RaaBAuAu], [cr, cb]):
-        mfc = "none" if pid=='B' else color
-        line = '--' if pid=='B' else '-'
-        label = 'B'if pid =='B' else "D"
-        cen = [0,10]
-        axes[4].plot(pT[1:], v['y'][0,1:], line, color=color, 
-                        label=label if j==0 else '', linewidth=1)
-        axes[4].fill_between(pT[1:], v['y'][0,1:]-v['yerr'][0,1:],
-                               v['y'][0,1:]+v['yerr'][0,1:], color=color,
-                               alpha=0.3)
-        axes[4].set_xlabel(r"$p_T$ [GeV]")
-        axes[4].set_ylim(0, 1.5)
-        #axes[4].set_title("Au+Au {}-{}%".format(*cen))
-        axes[4].annotate("Au+Au {}-{}%".format(*cen), xy=(0.25, 0.9), xycoords='axes fraction')
-    # plot STAR Raa
-    pTl, pTh, y, ystat, ysys, _ = np.loadtxt("./prelim-exp/STAR-Raa-0-10.dat".format(cen)).T
-    pT = (pTl+pTh)/2.
-    pTbar = (pTh-pTl)/2.
-    axes[-1].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='STAR, D', color='k', markersize=2, zorder=-1)
-    for ix, iw, iy, iysys in \
-        zip(pT, pTbar, y, ysys):
-        il, ih = iy-iysys, iy+iysys
-        axes[-1].fill_between(
-            [ix-iw, ix+iw],
-            [il, il], [ih, ih],
-            zorder=-10,
-            facecolor='white', edgecolor='k'
-        )
-    axes[4].set_xlim(0,10)
-    axes[0].legend(loc=(0.25,0.45))
-    axes[3].legend(loc=(0.02,0.1))
-    axes[4].legend(loc=(0.25,0.65))
-    set_tight(fig, rect=[0.0, 0, .99, 0.99])
+	fig, axes = plt.subplots(1,5,sharey=True, #sharex=True, 
+							figsize=(fullwidth, 0.24*fullwidth))
+	
+	from JetCalc.ExpCut import cuts as ExpCut
+	#######LHC###########################
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
+		p = f['00']
+		RaaD = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
+			   'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
+		RaaB = {'y': p['ALICE/EPPS/Raa/B+-/mean'].value[:,:],
+			   'yerr': p['ALICE/EPPS/Raa/B+-/yerr'].value[:,:] }
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-pPb.hdf5",'r') as f:
+		p = f['00']
+		RaaDpPb = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
+			   'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
+		RaaBpPb = {'y': p['ALICE/EPPS/Raa/B+-/mean'].value[:,:],
+			   'yerr': p['ALICE/EPPS/Raa/B+-/yerr'].value[:,:] }
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-pPb-no-shadowing.hdf5",'r') as f:
+		p = f['00']
+		RaaDpPbN = {'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
+			   'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] }
+		RaaBpPbN = {'y': p['ALICE/EPPS/Raa/B+-/mean'].value[:,:],
+			   'yerr': p['ALICE/EPPS/Raa/B+-/yerr'].value[:,:] }
+	pTb = ExpCut['pred-pT']
+	pT = np.mean(pTb, axis=1)
+	pTbar = (pTb[:,1]-pTb[:,0])/2.
+	for M, pid, v, color in zip([1.87, 5.28], ['D', 'B'], [RaaD, RaaB], [cr, cb]):
+		mfc = "none" if pid=='B' else color
+		line = '--' if pid=='B' else '-'
+		label = 'B'if pid =='B' else "D"
+		for j, cen in enumerate(ExpCut['ALICE']['Raa']['cenbins']):
+			axes[j].plot(pT[1:], v['y'][j,1:], line, color=color, 
+							label=label if j==0 else '', linewidth=1)
+			axes[j].fill_between(pT[1:], v['y'][j,1:]-v['yerr'][j,1:],
+								   v['y'][j,1:]+v['yerr'][j,1:], color=color,
+								   alpha=0.3)
+			if axes[j].is_first_col():
+				axes[j].set_ylabel(r"$R_{AA}$")
+			axes[j].set_xlabel(r"$p_T$ [GeV]")
+			axes[j].set_ylim(0, 1.5)
+			#axes[j].set_title("Pb+Pb {}-{}%".format(*cen))
+			axes[j].annotate("Pb+Pb {}-{}%".format(*cen), xy=(0.25, 0.9), xycoords='axes fraction')
+			axes[j].semilogx()
+	# pPb
+	pl,ph,y,ystat,ysysp,ysysm = np.loadtxt('cache/hepdata/pPb-raa.dat').T
+				
+	axes[3].plot(pT[1:], RaaDpPb['y'][0,1:], '-', color=cr, linewidth=1)
+	axes[3].plot(pT[1:], RaaBpPb['y'][0,1:], '--', color=cb, linewidth=1)
+	axes[3].plot(pT[1:], RaaDpPbN['y'][0,1:], ':', color=cr, linewidth=2, label='D no shadow')
+	axes[3].set_xlabel(r"$p_T$ [GeV]")
+	axes[3].set_ylim(0, 1.5)
+	#axes[3].set_title("p+Pb 0-100%")
+	axes[3].annotate("p+Pb 0-100%", xy=(0.25, 0.9), xycoords='axes fraction')
+	axes[3].errorbar((ph+pl)/2, y, xerr=(ph-pl)/2, yerr=ystat, fmt='D', color='k', markersize=2, zorder=-1)
+	for ix, iw, iy, iysysp, iysysm in \
+		zip((ph+pl)/2, (ph-pl)/2, y, ysysp, ysysm):
+		il, ih = iy+iysysm, iy+iysysp
+		axes[3].fill_between(
+			[ix-iw, ix+iw],
+			[il, il], [ih, ih],
+			zorder=-10,
+			facecolor='white', edgecolor='k'
+		)
+		axes[3].semilogx()
+	
+	# plot ALICE Raa
+	for j, cen in enumerate(['0-10','30-50', '60-80']):
+		pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/ALICE-Raa-D-{}.dat".format(cen)).T
+		pT = (pTl+pTh)/2.
+		pTbar = (pTh-pTl)/2.
+		axes[j].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='ALICE, D' if j==0 else '', color='k', markersize=2, zorder=-1)
+		for ix, iw, iy, iysys in \
+			zip(pT, pTbar, y, ysys):
+			il, ih = iy-iysys, iy+iysys
+			axes[j].fill_between(
+				[ix-iw, ix+iw],
+				[il, il], [ih, ih],
+				zorder=-10,
+				facecolor='white', edgecolor='k'
+			)
+	#####RHIC##################
+	pTb = ExpCut['pred-pT-rhic']
+	pT = np.mean(pTb, axis=1)
+	pTbar = (pTb[:,1]-pTb[:,0])/2.
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-AuAu.hdf5",'r') as f:
+		p = f['00']
+		RaaDAuAu = {'y': p['STAR/EPPS/Raa/D+D*/mean'].value[:,:],
+			   'yerr': p['STAR/EPPS/Raa/D+D*/yerr'].value[:,:] }
+		RaaBAuAu = {'y': p['STAR/EPPS/Raa/B+-/mean'].value[:,:],
+			   'yerr': p['STAR/EPPS/Raa/B+-/yerr'].value[:,:] }
+	for M, pid, v, color in zip([1.87, 5.28], ['D', 'B'], [RaaDAuAu, RaaBAuAu], [cr, cb]):
+		mfc = "none" if pid=='B' else color
+		line = '--' if pid=='B' else '-'
+		label = 'B'if pid =='B' else "D"
+		cen = [0,10]
+		axes[4].plot(pT[1:], v['y'][0,1:], line, color=color, 
+						label=label if j==0 else '', linewidth=1)
+		axes[4].fill_between(pT[1:], v['y'][0,1:]-v['yerr'][0,1:],
+							   v['y'][0,1:]+v['yerr'][0,1:], color=color,
+							   alpha=0.3)
+		axes[4].set_xlabel(r"$p_T$ [GeV]")
+		axes[4].set_ylim(0, 1.5)
+		#axes[4].set_title("Au+Au {}-{}%".format(*cen))
+		axes[4].annotate("Au+Au {}-{}%".format(*cen), xy=(0.25, 0.9), xycoords='axes fraction')
+	# plot STAR Raa
+	pTl, pTh, y, ystat, ysys, _ = np.loadtxt("./prelim-exp/STAR-Raa-0-10.dat".format(cen)).T
+	pT = (pTl+pTh)/2.
+	pTbar = (pTh-pTl)/2.
+	axes[-1].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='STAR, D', color='k', markersize=2, zorder=-1)
+	for ix, iw, iy, iysys in \
+		zip(pT, pTbar, y, ysys):
+		il, ih = iy-iysys, iy+iysys
+		axes[-1].fill_between(
+			[ix-iw, ix+iw],
+			[il, il], [ih, ih],
+			zorder=-10,
+			facecolor='white', edgecolor='k'
+		)
+	axes[4].set_xlim(0,10)
+	axes[0].legend(loc=(0.25,0.45))
+	axes[3].legend(loc=(0.02,0.1))
+	axes[4].legend(loc=(0.25,0.65))
+	set_tight(fig, rect=[0.0, 0, .99, 0.99])
+
+
+@plot
+def raa_mclpm():
+	fig = plt.figure(figsize=(fullwidth, .47*fullwidth))
+	gs = GridSpec(7, 12)
+	ax1 = plt.subplot(gs[0:4, 0:4])
+	ax2 = plt.subplot(gs[0:4, 4:8])
+	ax3 = plt.subplot(gs[0:4, 8:12])
+	#ax4 = plt.subplot(gs[0:3, 9:12])
+	ax5 = plt.subplot(gs[4:, :4])
+	ax6 = plt.subplot(gs[4:, 4:8])
+	ax7 = plt.subplot(gs[4:, 8:12])
+	#ax8 = plt.subplot(gs[5:7, :4])
+	#ax9 = plt.subplot(gs[5:7, 4:8])
+	#ax10 = plt.subplot(gs[5:7, 8:12])  
+
+	from JetCalc.ExpCut import cuts as ExpCut
+	#######LHC###########################
+	f1 = h5py.File("./model_output/main/PbPb5020/mclpm-pred.hdf5",'r')
+	f3 = h5py.File("./model_output/main/PbPb5020/mclpm-pred-pPb.hdf5",'r')
+	p1 = f1['alphas-0d3'] # 
+	p3 = f1['alphas-0d4'] # 
+	p4 = f3['mu1d0-pPb-LO']
+	p5 = f3['mu2d0-pPb-LO']
+	PS = [p1, p3]
+	RaaDEPPS = [{	'y': p['ALICE/EPPS/Raa/D/mean'].value[:,:],
+					'yerr': p['ALICE/EPPS/Raa/D/yerr'].value[:,:] } for p in PS ]
+			
+	RaaDnCTEQ = [{	'y': p['ALICE/nCTEQ/Raa/D/mean'].value[:,:],
+					'yerr': p['ALICE/nCTEQ/Raa/D/yerr'].value[:,:] } for p in PS ]
+
+	v2DEPPS = [{	'y': p['CMS/EPPS/vn2/D+D*/mean'].value[:,:,0],
+						  'yerr': p['CMS/EPPS/vn2/D+D*/yerr'].value[:,:,0] } for p in PS ]
+	v3DEPPS = [{	'y': p['CMS/EPPS/vn2/D+D*/mean'].value[:,:,1],
+						  'yerr': p['CMS/EPPS/vn2/D+D*/yerr'].value[:,:,1] } for p in PS ]
+	v2DnCTEQ = [{	'y': p['CMS/nCTEQ/vn2/D+D*/mean'].value[:,:,0],
+						  'yerr': p['CMS/nCTEQ/vn2/D+D*/yerr'].value[:,:,0] } for p in PS ]
+	v3DnCTEQ = [{	'y': p['CMS/nCTEQ/vn2/D+D*/mean'].value[:,:,1],
+						  'yerr': p['CMS/nCTEQ/vn2/D+D*/yerr'].value[:,:,1] } for p in PS ]
+
+	RaaDEPPS_pPb = [{	'y': p['ALICE/EPPS/Raa/D+D*/mean'].value[:,:],
+					'yerr': p['ALICE/EPPS/Raa/D+D*/yerr'].value[:,:] } for p in [p4,p5] ]
+			
+	RaaDnCTEQ_pPb = [{	'y': p['ALICE/nCTEQ/Raa/D+D*/mean'].value[:,:],
+								'yerr': p['ALICE/nCTEQ/Raa/D+D*/yerr'].value[:,:] } for p in [p5] ]
+	pTb = ExpCut['pred-pT']
+	pT = np.mean(pTb, axis=1)
+	pTbar = (pTb[:,1]-pTb[:,0])/2.
+
+	# plot raa for PbPb
+	for j, (cen, ax) in enumerate(zip(ExpCut['ALICE']['Raa']['cenbins'],[ax1, ax2, ax3])):
+		for nPDF, v, color, hatch in zip(['EPPS','nCTEQ'], [RaaDEPPS, RaaDnCTEQ], [cr, cb], ['', '']):
+			ax.fill_between(pT[1:], v[0]['y'][j,1:], v[-1]['y'][j,1:], 
+								facecolor=color, edgecolor="none", alpha=0.35, label=nPDF if j==1 else '')
+			for iv, line, mu in zip(v,['-','--','-.'],[0.3,0.4]):
+				#ax.errorbar(pT[1:], iv['y'][j,1:], yerr=iv['yerr'][j,1:], fmt=line, color=color, label=r'$\alpha_s = 0.3$, '+nPDF if j==1 else '', linewidth=1)
+				ax.plot(pT[1:], iv['y'][j,1:], line, color=color , label=r'$\alpha_s = {:1.1f}$'.format(mu) if nPDF=='EPPS' and j==1 else '', linewidth=1)
+		ax.set_ylim(0, 1.7)
+		ax.set_xlim(0.9, 100)
+		ax.annotate("Pb+Pb {}-{}%".format(*cen), xy=(0.15, 0.99), xycoords='axes fraction')
+		ax.semilogx()
+		ax.set_yticks([0,.5,1.,1.5])
+	ax1.set_ylabel(r"$R_{AA}$")	
+	
+	# plot raa for pPb
+	"""ax = ax4
+	for nPDF, v, color, hatch in zip(['EPPS','nCTEQ'], [RaaDEPPS_pPb, RaaDnCTEQ_pPb], [cr, cb], ['', '']):
+		ax.fill_between(pT[1:], v[0]['y'][0,1:], v[-1]['y'][0,1:], 
+							facecolor=color, edgecolor="none", alpha=0.35, label=nPDF)
+		for iv, line in zip(v,['-','--','-.']):
+			ax.plot(pT[1:], iv['y'][0,1:], line, color=color, label=r'$\mu = \pi T$' if nPDF == 'EPPS' and j==0 else '', linewidth=1)
+	ax.set_yticks([0,.5,1.,1.5])
+	ax.set_ylim(0, 1.7)
+	ax.set_xlim(0.9, 100)
+	ax.annotate("p+Pb 0-100%", xy=(0.15, 0.99), xycoords='axes fraction')
+	ax.semilogx()"""
+
+	# plot v2
+	for j, (cen, ax) in enumerate(zip(ExpCut['CMS']['vn_HF']['cenbins'], [ax5, ax6, ax7])):
+		for nPDF, v, color in zip(['EPPS','nCTEQ'], [v2DEPPS, v2DnCTEQ], [cr]):
+			ax.fill_between(pT[1:], v[0]['y'][j,1:], v[-1]['y'][j,1:], 
+								facecolor=color, edgecolor="none", alpha=0.35)
+			for iv, line in zip(v,['-','--','-.']):
+				#ax.errorbar(pT[1:], iv['y'][j,1:], yerr=2*iv['yerr'][j,1:], fmt=line, color=color, linewidth=1)
+				ax.plot(pT[1:], iv['y'][j,1:], line, color=color, linewidth=1)
+		ax.set_ylim(-.01, .22)
+		ax.set_xlabel(r"$p_T$ GeV")
+		ax.annotate("Pb+Pb {}-{}%".format(*cen), xy=(0.15, 0.9), xycoords='axes fraction')
+		ax.semilogx()
+	ax5.set_ylabel(r"$v_{2}$")
+	"""# plot v3
+	for j, (cen, ax) in enumerate(zip(ExpCut['CMS']['vn_HF']['cenbins'], [ax8, ax9, ax10])):
+		for nPDF, v, color in zip(['EPPS','nCTEQ'], [v3DEPPS, v3DnCTEQ], [cr]):
+			ax.fill_between(pT[1:], v[0]['y'][j,1:], v[-1]['y'][j,1:], 
+								facecolor=color, edgecolor="none", alpha=0.35)
+			for iv, line in zip(v,['-','--','-.']):
+				ax.plot(pT[1:], iv['y'][j,1:], line, color=color, linewidth=1)
+		ax.set_xlabel(r"$p_T$ GeV")
+		ax.set_ylim(-.1, .17)
+		ax.annotate("Pb+Pb {}-{}%".format(*cen), xy=(0.15, 0.9), xycoords='axes fraction')
+		ax.semilogx()
+	ax8.set_ylabel(r"$v_{3}$")
+	"""
+	
+	# plot ALICE Raa PbPb
+	for j, (cen, ax) in enumerate(zip(['0-10','30-50','60-80'], [ax1, ax2, ax3])):
+		pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/ALICE-Raa-D-{}.dat".format(cen)).T
+		pT = (pTl+pTh)/2.
+		pTbar = (pTh-pTl)/2.
+		ax.errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='ALICE, D' if j==0 else '', color='k', markersize=2, zorder=-1)
+		for ix, iw, iy, iysys in \
+			zip(pT, pTbar, y, ysys):
+			il, ih = iy-iysys, iy+iysys
+			ax.fill_between(
+				[ix-iw, ix+iw],
+				[il, il], [ih, ih],
+				zorder=-10,
+				facecolor='white', edgecolor='k'
+			)
+	# plot CMS Raa PbPb
+	for j, (cen, ax) in enumerate(zip(['0-10'], [ax1])):
+		pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/CMS-Raa-{}.dat".format(cen)).T
+		pT = (pTl+pTh)/2.
+		pTbar = (pTh-pTl)/2.
+		ax.errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='s', label='CMS, D' if j==0 else '', color=cg, markersize=2, zorder=-1)
+		for ix, iw, iy, iysys in \
+			zip(pT, pTbar, y, ysys):
+			il, ih = iy-iysys, iy+iysys
+			ax.fill_between(
+				[ix-iw, ix+iw],
+				[il, il], [ih, ih],
+				zorder=-10,
+				facecolor='white', edgecolor=cg
+			)
+	# plot ALICE Raa pPb
+	"""ax = ax4
+	pl,ph,y,ystat,ysysp,ysysm = np.loadtxt('cache/hepdata/pPb-raa.dat').T
+	ax.errorbar((ph+pl)/2, y, xerr=(ph-pl)/2, yerr=ystat, fmt='D', color='k', markersize=2, zorder=-1)
+	for ix, iw, iy, iysysp, iysysm in \
+		zip((ph+pl)/2, (ph-pl)/2, y, ysysp, ysysm):
+		il, ih = iy+iysysm, iy+iysysp
+		ax.fill_between(
+			[ix-iw, ix+iw],
+			[il, il], [ih, ih],
+			zorder=-10,
+			facecolor='white', edgecolor='k'
+		)
+		ax.semilogx()"""
+
+	# plot CMS v2
+	for j, (cen, ax) in enumerate(zip(['0-10','10-30','30-50'], [ax5, ax6, ax7])):
+		pTl, pTh, y, ystat, ysys = np.loadtxt("./official-exp/CMS-v2-D-{}.dat".format(cen), usecols=[0,1,2,3,4]).T
+		pT = (pTl+pTh)/2.
+		pTbar = (pTh-pTl)/2.
+		ax.errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='CMS, D${}^0$', color='k', markersize=2, zorder=-1)
+		for ix, iw, iy, iysys in \
+			zip(pT, pTbar, y, ysys):
+			il, ih = iy-iysys, iy+iysys
+			ax.fill_between(
+				[ix-iw, ix+iw],
+				[il, il], [ih, ih],
+				zorder=-10,
+				facecolor='white', edgecolor='k'
+			)
+	"""
+	# plot CMS v3
+	for j, (cen, ax) in enumerate(zip(['0-10','10-30','30-50'], [ax8, ax9, ax10])):
+		pTl, pTh, y, ystat, ysys = np.loadtxt("./official-exp/CMS-v3-D-{}.dat".format(cen), usecols=[0,1,2,3,4]).T
+		pT = (pTl+pTh)/2.
+		pTbar = (pTh-pTl)/2.
+		ax.errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='CMS, D${}^0$', color='k', markersize=2, zorder=-1)
+		for ix, iw, iy, iysys in \
+			zip(pT, pTbar, y, ysys):
+			il, ih = iy-iysys, iy+iysys
+			ax.fill_between(
+				[ix-iw, ix+iw],
+				[il, il], [ih, ih],
+				zorder=-10,
+				facecolor='white', edgecolor='k'
+			)
+	"""
+	ax1.legend(loc=(.1,.71))
+	ax2.legend(loc=(.42,.45))
+	ax5.legend(loc=(.1,.71))
+	#ax8.legend(loc=(.1,.73))
+	for ax in [ax2, ax3, ax6, ax7]:
+		ax.set_yticklabels([])
+	set_tight(fig, rect=[0.0, 0, 1, .96])
+
 
 @plot
 def v2ee():
-    fig, ax = plt.subplots(1,1,sharex=True, #sharex=True, 
-                            figsize=(0.5*fullwidth, 0.35*fullwidth))
-    from JetCalc.ExpCut import cuts as ExpCut
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
-        p = f['00']
-        v = {'y': p['ALICE/EPPS/v2_ee/D+D*/mean'].value[0,:,:],
-               'yerr': p['ALICE/EPPS/v2_ee/D+D*/yerr'].value[0,:,:] }
-    pTb = ExpCut['pred-pT']
-    pT = np.mean(pTb, axis=1)
-    pTbar = (pTb[:,1]-pTb[:,0])/2.
-    for j in range(2):
-        ax.plot(pT, v['y'][:, j], linewidth=1)
-        ax.set_ylabel(r"$v_2$")
-        ax.set_xlabel(r"$p_T$ [GeV]")
-        ax.set_ylim(-0.05, 0.3)
-        ax.semilogx()
-    # plot ALICE
-    for j, cen in enumerate(['30-50-L','30-50-H']):
-        pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/ALICE-V2-D-{}.dat".format(cen)).T
-        pT = (pTl+pTh)/2.
-        pTbar = (pTh-pTl)/2.
-        ax.errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', color='k', markersize=2, zorder=-1)
-        for ix, iw, iy, iysys in \
-            zip(pT, pTbar, y, ysys):
-            il, ih = iy-iysys, iy+iysys
-            ax.fill_between(
-                [ix-iw, ix+iw],
-                [il, il], [ih, ih],
-                zorder=-10,
-                facecolor='white', edgecolor='k'
-            )
-    ax.legend(loc='upper right')
-    set_tight(fig, rect=[0, 0, .99, 0.99])
+	fig, ax = plt.subplots(1,1,sharex=True, #sharex=True, 
+							figsize=(0.5*fullwidth, 0.35*fullwidth))
+	from JetCalc.ExpCut import cuts as ExpCut
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
+		p = f['00']
+		v = {'y': p['ALICE/EPPS/v2_ee/D+D*/mean'].value[0,:,:],
+			   'yerr': p['ALICE/EPPS/v2_ee/D+D*/yerr'].value[0,:,:] }
+	pTb = ExpCut['pred-pT']
+	pT = np.mean(pTb, axis=1)
+	pTbar = (pTb[:,1]-pTb[:,0])/2.
+	for j in range(2):
+		ax.plot(pT, v['y'][:, j], linewidth=1)
+		ax.set_ylabel(r"$v_2$")
+		ax.set_xlabel(r"$p_T$ [GeV]")
+		ax.set_ylim(-0.05, 0.3)
+		ax.semilogx()
+	# plot ALICE
+	for j, cen in enumerate(['30-50-L','30-50-H']):
+		pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/ALICE-V2-D-{}.dat".format(cen)).T
+		pT = (pTl+pTh)/2.
+		pTbar = (pTh-pTl)/2.
+		ax.errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', color='k', markersize=2, zorder=-1)
+		for ix, iw, iy, iysys in \
+			zip(pT, pTbar, y, ysys):
+			il, ih = iy-iysys, iy+iysys
+			ax.fill_between(
+				[ix-iw, ix+iw],
+				[il, il], [ih, ih],
+				zorder=-10,
+				facecolor='white', edgecolor='k'
+			)
+	ax.legend(loc='upper right')
+	set_tight(fig, rect=[0, 0, .99, 0.99])
 
 @plot
 def vn():
-    fig, axes = plt.subplots(2,5,#sharex=True, #sharey=True, 
-                            figsize=(fullwidth, 0.4*fullwidth))
-    from JetCalc.ExpCut import cuts as ExpCut
-    # LHC
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
-        p = f['00']
-        v2D = {'y': p['CMS/EPPS/vn2/D+D*/mean'].value[:,:,0],
-               'yerr': p['CMS/EPPS/vn2/D+D*/yerr'].value[:,:,0] }
-        v3D = {'y': p['CMS/EPPS/vn2/D+D*/mean'].value[:,:,1],
-               'yerr': p['CMS/EPPS/vn2/D+D*/yerr'].value[:,:,1] }
-        v2B = {'y': p['CMS/EPPS/vn2/B+B*/mean'].value[:,:,0],
-               'yerr': p['CMS/EPPS/vn2/B+B*/yerr'].value[:,:,0] }
-        v3B = {'y': p['CMS/EPPS/vn2/B+B*/mean'].value[:,:,1],
-               'yerr': p['CMS/EPPS/vn2/B+B*/yerr'].value[:,:,1] }
-    pTb = ExpCut['pred-pT']
-    pT = np.mean(pTb, axis=1)
-    pTbar = (pTb[:,1]-pTb[:,0])/2.
-    for i, (n, vn) in enumerate(zip(['2','3'],[[v2D, v2B],[v3D, v3B]])):
-        for M, pid, v, color in zip([1.87, 5.28], ['D', 'B'], vn, [cr, cb]):
-            mfc = "none" if pid=='B' else color
-            line = '--' if pid=='B' else '-'
-            label = 'B${}^\pm$'if pid =='B' else "D${}^0$"
-            for j, cen in enumerate(ExpCut['CMS']['vn_HF']['cenbins']):
-                axes[i,j].plot(pT, v['y'][j], line, color=color, 
-                                label=label if i==0 and j==0 else '', linewidth=1)
-                axes[i,j].fill_between(pT, v['y'][j]-v['yerr'][j],
-                                       v['y'][j]+v['yerr'][j], color=color,
-                                       alpha=0.3)
-                if axes[i,j].is_first_col():
-                    axes[i,j].set_ylabel(r"$v_{}$".format(n))
-                else:
-                    axes[i,j].set_yticklabels([])
-                if axes[i,j].is_last_row():
-                    axes[i,j].set_xlabel(r"$p_T$ [GeV]")
-                    axes[i,j].set_ylim(-0.075, 0.15)
-                else:
-                    axes[i,j].set_ylim(-0.02, 0.25)
-                    #axes[i,j].set_title("Pb+Pb {}-{}%".format(*cen))
-                    axes[i,j].annotate("Pb+Pb {}-{}%".format(*cen), xy=(0.25, 0.9), xycoords='axes fraction')
-                axes[i,j].semilogx()
-                axes[i,j].set_xlim(.8, 100)
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-AuAu.hdf5",'r') as f:
-        p = f['00']
-        v2DAuAu = {'y': p['STAR/EPPS/vn2/D+D*/mean'].value[:,:,0],
-               'yerr': p['STAR/EPPS/vn2/D+D*/yerr'].value[:,:,0] }
-        v3DAuAu = {'y': p['STAR/EPPS/vn2/D+D*/mean'].value[:,:,1],
-               'yerr': p['STAR/EPPS/vn2/D+D*/yerr'].value[:,:,1] }
-        v2BAuAu = {'y': p['STAR/EPPS/vn2/B+B*/mean'].value[:,:,0],
-               'yerr': p['STAR/EPPS/vn2/B+B*/yerr'].value[:,:,0] }
-        v3BAuAu = {'y': p['STAR/EPPS/vn2/B+B*/mean'].value[:,:,1],
-               'yerr': p['STAR/EPPS/vn2/B+B*/yerr'].value[:,:,1] }
-    pTb = ExpCut['pred-pT-rhic']
-    pT = np.mean(pTb, axis=1)
-    pTbar = (pTb[:,1]-pTb[:,0])/2.
-    for i, (n, vn) in enumerate(zip(['2','3'],[[v2DAuAu, v2BAuAu],
-                                                 [v3DAuAu, v3BAuAu]])):
-        for M, pid, v, color in zip([1.87, 5.28], ['D', 'B'], vn, [cr, cb]):
-            mfc = "none" if pid=='B' else color
-            line = '--' if pid=='B' else '-'
-            label = 'B${}^\pm$'if pid =='B' else "D${}^0$"
-            for j, cen in enumerate(ExpCut['STAR']['vn_HF']['cenbins']):
-                axes[i,j+3].plot(pT, v['y'][j], line, color=color, linewidth=1)
-                axes[i,j+3].fill_between(pT, v['y'][j]-v['yerr'][j],
-                                       v['y'][j]+v['yerr'][j], color=color,
-                                       alpha=0.3)
-                if axes[i,j+3].is_first_col():
-                    axes[i,j+3].set_ylabel(r"$v_{}$".format(n)+r"$\{2\}$")
-                else:
-                    axes[i,j+3].set_yticklabels([])
-                if axes[i,j+3].is_last_row():
-                    axes[i,j+3].set_xlabel(r"$p_T$ [GeV]")
-                    axes[i,j+3].set_ylim(-0.075, 0.15)
-                else:
-                    axes[i,j+3].set_ylim(-0.02, 0.25)
-                    #axes[i,j+3].set_title("Au+Au {}-{}%".format(*cen))
-                    axes[i,j+3].annotate("Au+Au {}-{}%".format(*cen), xy=(0.25, 0.9), xycoords='axes fraction')
-                #axes[i,j+3].semilogx()
-                axes[i,j+3].set_xlim(0, 10)
-    # plot CMS vn
-    for i, n in enumerate(['2','3']):
-        for j, cen in enumerate(['0-10','10-30','30-50']):
-            pTl, pTh, y, ystat, ysys = np.loadtxt("./prelim-exp/CMS-v{}-{}.dat".format(n, cen), usecols=[0,1,2,3,4]).T
-            pT = (pTl+pTh)/2.
-            pTbar = (pTh-pTl)/2.
-            axes[i,j].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='CMS, D${}^0$' if i==0 and j==0 else '', color='k', markersize=2, zorder=-1)
-            for ix, iw, iy, iysys in \
-                zip(pT, pTbar, y, ysys):
-                il, ih = iy-iysys, iy+iysys
-                axes[i,j].fill_between(
-                    [ix-iw, ix+iw],
-                    [il, il], [ih, ih],
-                    zorder=-10,
-                    facecolor='white', edgecolor='k'
-                )
-    # plot STAR v2
-    for j, cen in zip([3,4], ['0-80', '10-40']):
-        pT, y, ystat, ysys, _ = np.loadtxt("./prelim-exp/STAR-v2-{}.dat".format(cen)).T
-        pTbar = np.ones_like(pT)*.5
-        axes[0,j].errorbar(pT, y, yerr=ystat, fmt='D', label='STAR, D${}^0$', color='k', markersize=2, zorder=-1)
-        for ix, iw, iy, iysys in \
-            zip(pT, pTbar, y, ysys):
-            il, ih = iy-iysys, iy+iysys
-            axes[0,j].fill_between(
-                [ix-iw, ix+iw],
-                [il, il], [ih, ih],
-                zorder=-10,
-                facecolor='white', edgecolor='k'
-            )
-    axes[0,0].legend(loc=(0.35, 0.35))
-    axes[0,3].legend(loc=(0.3, 0.65))
-    set_tight(fig, rect=[0.02, 0, 1, 1])
+	fig, axes = plt.subplots(2,5,#sharex=True, #sharey=True, 
+							figsize=(fullwidth, 0.4*fullwidth))
+	from JetCalc.ExpCut import cuts as ExpCut
+	# LHC
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
+		p = f['00']
+		v2D = {'y': p['CMS/EPPS/vn2/D+D*/mean'].value[:,:,0],
+			   'yerr': p['CMS/EPPS/vn2/D+D*/yerr'].value[:,:,0] }
+		v3D = {'y': p['CMS/EPPS/vn2/D+D*/mean'].value[:,:,1],
+			   'yerr': p['CMS/EPPS/vn2/D+D*/yerr'].value[:,:,1] }
+		v2B = {'y': p['CMS/EPPS/vn2/B+B*/mean'].value[:,:,0],
+			   'yerr': p['CMS/EPPS/vn2/B+B*/yerr'].value[:,:,0] }
+		v3B = {'y': p['CMS/EPPS/vn2/B+B*/mean'].value[:,:,1],
+			   'yerr': p['CMS/EPPS/vn2/B+B*/yerr'].value[:,:,1] }
+	pTb = ExpCut['pred-pT']
+	pT = np.mean(pTb, axis=1)
+	pTbar = (pTb[:,1]-pTb[:,0])/2.
+	for i, (n, vn) in enumerate(zip(['2','3'],[[v2D, v2B],[v3D, v3B]])):
+		for M, pid, v, color in zip([1.87, 5.28], ['D', 'B'], vn, [cr, cb]):
+			mfc = "none" if pid=='B' else color
+			line = '--' if pid=='B' else '-'
+			label = 'B${}^\pm$'if pid =='B' else "D${}^0$"
+			for j, cen in enumerate(ExpCut['CMS']['vn_HF']['cenbins']):
+				axes[i,j].plot(pT, v['y'][j], line, color=color, 
+								label=label if i==0 and j==0 else '', linewidth=1)
+				axes[i,j].fill_between(pT, v['y'][j]-v['yerr'][j],
+									   v['y'][j]+v['yerr'][j], color=color,
+									   alpha=0.3)
+				if axes[i,j].is_first_col():
+					axes[i,j].set_ylabel(r"$v_{}$".format(n))
+				else:
+					axes[i,j].set_yticklabels([])
+				if axes[i,j].is_last_row():
+					axes[i,j].set_xlabel(r"$p_T$ [GeV]")
+					axes[i,j].set_ylim(-0.075, 0.15)
+				else:
+					axes[i,j].set_ylim(-0.02, 0.25)
+					#axes[i,j].set_title("Pb+Pb {}-{}%".format(*cen))
+					axes[i,j].annotate("Pb+Pb {}-{}%".format(*cen), xy=(0.25, 0.9), xycoords='axes fraction')
+				axes[i,j].semilogx()
+				axes[i,j].set_xlim(.8, 100)
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-AuAu.hdf5",'r') as f:
+		p = f['00']
+		v2DAuAu = {'y': p['STAR/EPPS/vn2/D+D*/mean'].value[:,:,0],
+			   'yerr': p['STAR/EPPS/vn2/D+D*/yerr'].value[:,:,0] }
+		v3DAuAu = {'y': p['STAR/EPPS/vn2/D+D*/mean'].value[:,:,1],
+			   'yerr': p['STAR/EPPS/vn2/D+D*/yerr'].value[:,:,1] }
+		v2BAuAu = {'y': p['STAR/EPPS/vn2/B+B*/mean'].value[:,:,0],
+			   'yerr': p['STAR/EPPS/vn2/B+B*/yerr'].value[:,:,0] }
+		v3BAuAu = {'y': p['STAR/EPPS/vn2/B+B*/mean'].value[:,:,1],
+			   'yerr': p['STAR/EPPS/vn2/B+B*/yerr'].value[:,:,1] }
+	pTb = ExpCut['pred-pT-rhic']
+	pT = np.mean(pTb, axis=1)
+	pTbar = (pTb[:,1]-pTb[:,0])/2.
+	for i, (n, vn) in enumerate(zip(['2','3'],[[v2DAuAu, v2BAuAu],
+												 [v3DAuAu, v3BAuAu]])):
+		for M, pid, v, color in zip([1.87, 5.28], ['D', 'B'], vn, [cr, cb]):
+			mfc = "none" if pid=='B' else color
+			line = '--' if pid=='B' else '-'
+			label = 'B${}^\pm$'if pid =='B' else "D${}^0$"
+			for j, cen in enumerate(ExpCut['STAR']['vn_HF']['cenbins']):
+				axes[i,j+3].plot(pT, v['y'][j], line, color=color, linewidth=1)
+				axes[i,j+3].fill_between(pT, v['y'][j]-v['yerr'][j],
+									   v['y'][j]+v['yerr'][j], color=color,
+									   alpha=0.3)
+				if axes[i,j+3].is_first_col():
+					axes[i,j+3].set_ylabel(r"$v_{}$".format(n)+r"$\{2\}$")
+				else:
+					axes[i,j+3].set_yticklabels([])
+				if axes[i,j+3].is_last_row():
+					axes[i,j+3].set_xlabel(r"$p_T$ [GeV]")
+					axes[i,j+3].set_ylim(-0.075, 0.15)
+				else:
+					axes[i,j+3].set_ylim(-0.02, 0.25)
+					#axes[i,j+3].set_title("Au+Au {}-{}%".format(*cen))
+					axes[i,j+3].annotate("Au+Au {}-{}%".format(*cen), xy=(0.25, 0.9), xycoords='axes fraction')
+				#axes[i,j+3].semilogx()
+				axes[i,j+3].set_xlim(0, 10)
+	# plot CMS vn
+	for i, n in enumerate(['2','3']):
+		for j, cen in enumerate(['0-10','10-30','30-50']):
+			pTl, pTh, y, ystat, ysys = np.loadtxt("./official-exp/CMS-v{}-D-{}.dat".format(n, cen), usecols=[0,1,2,3,4]).T
+			pT = (pTl+pTh)/2.
+			pTbar = (pTh-pTl)/2.
+			axes[i,j].errorbar(pT, y, xerr=pTbar, yerr=ystat, fmt='D', label='CMS, D${}^0$' if i==0 and j==0 else '', color='k', markersize=2, zorder=-1)
+			for ix, iw, iy, iysys in \
+				zip(pT, pTbar, y, ysys):
+				il, ih = iy-iysys, iy+iysys
+				axes[i,j].fill_between(
+					[ix-iw, ix+iw],
+					[il, il], [ih, ih],
+					zorder=-10,
+					facecolor='white', edgecolor='k'
+				)
+	# plot STAR v2
+	for j, cen in zip([3,4], ['0-80', '10-40']):
+		pT, y, ystat, ysys, _ = np.loadtxt("./prelim-exp/STAR-v2-{}.dat".format(cen)).T
+		pTbar = np.ones_like(pT)*.5
+		axes[0,j].errorbar(pT, y, yerr=ystat, fmt='D', label='STAR, D${}^0$', color='k', markersize=2, zorder=-1)
+		for ix, iw, iy, iysys in \
+			zip(pT, pTbar, y, ysys):
+			il, ih = iy-iysys, iy+iysys
+			axes[0,j].fill_between(
+				[ix-iw, ix+iw],
+				[il, il], [ih, ih],
+				zorder=-10,
+				facecolor='white', edgecolor='k'
+			)
+	axes[0,0].legend(loc=(0.35, 0.35))
+	axes[0,3].legend(loc=(0.3, 0.65))
+	set_tight(fig, rect=[0.02, 0, 1, 1])
 
 @plot
 def v1():
-    fig, (ax1, ax2) = plt.subplots(1,2,sharey=True, sharex=True, 
-                            figsize=(0.5*fullwidth, 0.3*fullwidth))
-    cenb = np.array([[0,10],[10,30],[30,50],[50,80]])
-    cen = np.mean(cenb, axis=1)
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-out.hdf5",'r') as f:
-        v1 = np.array([p['ALICE/EPPS/v1/D+D*/mean'][:,0] for p in f.values()])
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
-        v1pred = f['00/ALICE/EPPS/v1/D+D*/mean'][:,1]
-        v1prederr = f['00/ALICE/EPPS/v1/D+D*/yerr'][:,1]
-    # prior
-    vmax = np.max(v1, axis=0)
-    vmin = np.min(v1, axis=0)
+	fig, (ax1, ax2) = plt.subplots(1,2,sharey=True, sharex=True, 
+							figsize=(0.5*fullwidth, 0.3*fullwidth))
+	cenb = np.array([[0,10],[10,30],[30,50],[50,80]])
+	cen = np.mean(cenb, axis=1)
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-out.hdf5",'r') as f:
+		v1 = np.array([p['ALICE/EPPS/v1/D+D*/mean'][:,0] for p in f.values()])
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred.hdf5",'r') as f:
+		v1pred = f['00/ALICE/EPPS/v1/D+D*/mean'][:,1]
+		v1prederr = f['00/ALICE/EPPS/v1/D+D*/yerr'][:,1]
+	# prior
+	vmax = np.max(v1, axis=0)
+	vmin = np.min(v1, axis=0)
 
-    for i, (xl, xh, yl, yh) in enumerate(zip(cenb[:,0], cenb[:,1], vmin, vmax)):
-        ax1.plot([xl, xh], [yh,yh], color=cr)
-        ax1.plot([xl, xh], [yl,yl], color=cr)
-        if i!=0:
-            ax1.plot([xl, xl], [vmax[i-1],yh], color=cr)
-            ax1.plot([xl, xl], [vmin[i-1],yl], color=cr)
-    # pred
-    ax2.errorbar(cen, v1pred, xerr=(cenb[:,1]-cenb[:,0])/2., 
-            yerr=v1prederr, color=cr, fmt='D')
-    #
-    ax1.set_xlabel("Centrality (%)")
-    ax2.set_xlabel("Centrality (%)")
-    ax1.set_ylabel(r"$v_{1}$ relative to $\Psi_3$")
-    ax2.legend(loc='upper right')
-    ax1.legend(loc='upper right')
-    ax1.set_ylim(-0.065, 0.02)
-    ax1.set_title("Priori range")
-    ax2.set_title("Prediction")
-    ax1.annotate("$p_T > 3$ GeV, $|y|<0.8$", xy=(0.1, 0.9), xycoords='axes fraction',)
-    ax2.annotate("$p_T > 3$ GeV, $|y|<0.8$", xy=(0.1, 0.9), xycoords='axes fraction',)
-    set_tight(fig, rect=[0, 0, .97, 0.94])
+	for i, (xl, xh, yl, yh) in enumerate(zip(cenb[:,0], cenb[:,1], vmin, vmax)):
+		ax1.plot([xl, xh], [yh,yh], color=cr)
+		ax1.plot([xl, xh], [yl,yl], color=cr)
+		if i!=0:
+			ax1.plot([xl, xl], [vmax[i-1],yh], color=cr)
+			ax1.plot([xl, xl], [vmin[i-1],yl], color=cr)
+	# pred
+	ax2.errorbar(cen, v1pred, xerr=(cenb[:,1]-cenb[:,0])/2., 
+			yerr=v1prederr, color=cr, fmt='D')
+	#
+	ax1.set_xlabel("Centrality (%)")
+	ax2.set_xlabel("Centrality (%)")
+	ax1.set_ylabel(r"$v_{1}$ relative to $\Psi_3$")
+	ax2.legend(loc='upper right')
+	ax1.legend(loc='upper right')
+	ax1.set_ylim(-0.065, 0.02)
+	ax1.set_title("Priori range")
+	ax2.set_title("Prediction")
+	ax1.annotate("$p_T > 3$ GeV, $|y|<0.8$", xy=(0.1, 0.9), xycoords='axes fraction',)
+	ax2.annotate("$p_T > 3$ GeV, $|y|<0.8$", xy=(0.1, 0.9), xycoords='axes fraction',)
+	set_tight(fig, rect=[0, 0, .97, 0.94])
 
 @plot
 def v1pT():
-    fig, axes = plt.subplots(1,1,#sharey=True, sharex=True, 
-                            figsize=(0.35*fullwidth, 0.25*fullwidth))
-    pTb = np.array([[0.01,0.99],[1,3],[3,5],[5,10],[10,20],[20,40],[40,100]]) 
-    pT = np.mean(pTb, axis=1)
-    cen = [30,50]
-    with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-v1.hdf5",'r') as f:
-        v1pred = f['00/ALICE/EPPS/v1/D+D*/mean'][2,:]
-        v1prederr = f['00/ALICE/EPPS/v1/D+D*/yerr'][2,:]
+	fig, axes = plt.subplots(1,1,#sharey=True, sharex=True, 
+							figsize=(0.35*fullwidth, 0.25*fullwidth))
+	pTb = np.array([[0.01,0.99],[1,3],[3,5],[5,10],[10,20],[20,40],[40,100]]) 
+	pT = np.mean(pTb, axis=1)
+	cen = [30,50]
+	with h5py.File("./model_output/main/PbPb5020/lhc-bc-pred-v1.hdf5",'r') as f:
+		v1pred = f['00/ALICE/EPPS/v1/D+D*/mean'][2,:]
+		v1prederr = f['00/ALICE/EPPS/v1/D+D*/yerr'][2,:]
 
-    # pred
-    ax = axes#[0]
-    ax.errorbar(pT, v1pred, xerr=(pTb[:,1]-pTb[:,0])/2., 
-            yerr=v1prederr, color=cr, fmt='D')
-    #
-    ax.set_xlabel("$p_T$ [GeV]")
-    ax.set_ylabel(r"$v_{1}$ relative to $\Psi_3$")
-    ax.legend(loc='upper right')
-    ax.set_ylim(-0.03, 0.015)
-    ax.semilogx()
-    ax.set_xlim(.3, 100)
-    ax.set_xticks([1,10,100])
-    ax.set_yticks([-0.03, -0.015, 0, 0.015])
-    ax.annotate("Pb+Pb $\sqrt{s}$=5020 GeV \n 30-50%, $|y|<0.8$", xy=(0.1, 0.8), xycoords='axes fraction',)
-    """
-    # demo
-    import scipy.ndimage as nd
-    ax = axes[1]
-    z = np.loadtxt("trento/49.dat")
-    x1,y1 = nd.measurements.center_of_mass(z)
-    x1 = -10+0.2*x1
-    y1 = -10+0.2*y1
-    x2,y2 = 0.296*np.cos(-1.555), 0.296*np.sin(-1.555)
-    x3,y3 = 0.291*np.cos(-0.587), 0.291*np.sin(-0.587)
-    cmap1 = plt.get_cmap('Blues')
-    cmap1.set_bad('white')
-    ax.contourf(np.flipud(z.T), extent=[-10,10,-10,10], cmap=cmap1)
-    ax.arrow(x1,y1,x2*20,y2*20,head_width=.5)
-    ax.arrow(x1,y1,x3*20,y3*20,head_width=.5)
-    ax.annotate("n=2",xy=(x1+x2*20+.5, y1+y2*20), fontsize=5)
-    ax.annotate("n=3",xy=(x1+x3*20, y1+y3*20-1.5), fontsize=5)
-    ax.plot([x1-np.cos(-0.587+np.pi/2.)*20,x1+np.cos(-0.587+np.pi/2.)*20],[y1-np.sin(-0.587+np.pi/2.)*20,y1+np.sin(-0.587+np.pi/2.)*20], 'k--', linewidth=0.3)
-    ax.set_xlim(-8,8)
-    ax.set_ylim(-8,8)
-    ax.plot([1.5], [0.7], 'ro', markersize=2)
-    ax.arrow(1.5,0.7,x3*8,y3*5,head_width=.2, color='r')
-    ax.arrow(1.5,0.7,-x3*8,-y3*8,head_width=.2, color='r')
-    ax.arrow(1.5,0.7,x3*3,y3*5,head_width=.2, color='r')
-    ax.arrow(1.5,0.7,-x3*5,-y3*3,head_width=.2, color='r')
-    ax.arrow(1.5,0.7,-x3*1,y3*5,head_width=.2, color='r')
-    ax.arrow(1.5,0.7,x3*1,-y3*3,head_width=.2, color='r')
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.axis('off')
-    ax.set_aspect('equal')
-    """
-    set_tight(fig, rect=[0, 0, 1, 1])
-
-
-def _observables(posterior=False, plot_type='violins'):
-    """
-    Model observables at all design points or drawn from the posterior with
-    experimental data points.
-
-    """
-    plots = _observables_plots()
-    nrows = len(plots)
-    ncols = [len(item['subplots']) for item in plots]
-
-    if posterior:
-        samples = {nPDF: mcmc.Chain(nPDF=nPDF).samples(400) for nPDF in ['EPPS', 'nCTEQ']}
-    fig = plt.figure(figsize=(.5*fullwidth, 0.6*fullwidth))
-
-    gs = GridSpec(4, 3)
-    ax1 = plt.subplot(gs[0, 0])
-    ax2 = plt.subplot(gs[0, 1])
-    ax3 = plt.subplot(gs[0, 2])
-    ax4 = plt.subplot(gs[1, 0])
-    ax5 = plt.subplot(gs[1, 1])
-    ax6 = plt.subplot(gs[1, 2])
-    ax7 = plt.subplot(gs[2, 0])
-    ax8 = plt.subplot(gs[2, 1])
-    ax9 = plt.subplot(gs[2, 2])
-    ax10 = plt.subplot(gs[3, 0])
-    ax11 = plt.subplot(gs[3, 1])
-    ax12 = plt.subplot(gs[3, 2])
-    system = 'PbPb5020'
-    SP={'D0': '$D^0$', 'B':'$B^{\pm}$', 'D-avg': "$D$"}
-    allaxes = [[ax1, ax2, ax3], [ax4, ax5, ax6], [ax7, ax8, ax9], [ax10, ax11], [ax12]]
-    for plot, rowax in zip(plots, allaxes):
-        for (exp, obs, specie, cen, opts), ax in zip(plot['subplots'], rowax):
-            # load exp
-            try:
-                dset = expt.data[system][exp][obs][specie][cen]
-            except KeyError:
-                pass
-
-            scale = opts.get('scale')
-            
-            print(exp, obs, specie, cen)
-            for nPDF in ['EPPS','nCTEQ']:
-                color = obs_color(obs, nPDF)
-                x = model.data[system][nPDF][exp][obs][specie][cen]['x']
-                Y = samples[nPDF][system][exp][obs][specie][cen] if posterior else model.data[system][nPDF][exp][obs][specie][cen]['Y']
-                w = [h-l for l, h in dset['pT'] ]
-                if scale is not None:
-                    Y = Y*scale
-
-                if plot_type=='lines':
-                    for y in Y:
-                        ax.plot(x, y, color=color, alpha=.2, lw=.3,)
-                elif plot_type=='violins':
-                    violin = ax.violinplot(list(Y.T), x, widths=w, showextrema=True, showmedians=True)
-                    for b in violin['bodies']:
-                        b.set_color(color)
-                    for partname in ('cbars','cmins','cmaxes','cmedians'):
-                        vp = violin[partname]
-                        vp.set_edgecolor(color)
-                        vp.set_linewidth(.5)
-                else:
-                    raise KeyError("Unknown plot type")
-            # exp
-            x = dset['x']
-            y = dset['y']
-            xerr = [(ph-pl)/2. for (pl, ph) in dset['pT']]
-            yerr = np.sqrt(sum(
-                e**2 for e in dset['yerr'].values()
-            ))
-
-            
-
-            if scale is not None:
-                y = y*scale
-                yerr = yerr*scale
-
-            ax.errorbar(
-                x, y, xerr=xerr, yerr=yerr, fmt='D', ms=1.7,
-                capsize=0, color='.25', zorder=1000
-            )
-            ax.set_title(label=exp+' '+opts['label'], fontsize=5)
-            ax.annotate(
-            SP[specie], (.5, .8), xycoords='axes fraction',
-            ha='center', va='bottom', fontsize=5, color='k'
-            )
-
-            if plot.get('yscale') == 'log':
-                ax.set_yscale('log')
-                #ax.minorticks_off()
-            else:
-                auto_ticks(ax, 'y', nbins=4, minor=2)
-
-            if plot.get('xscale') == 'log':
-                ax.set_xscale('log')
-                #ax.minorticks_off()
-            else:
-                auto_ticks(ax, 'x', nbins=5, minor=2)
+	# pred
+	ax = axes#[0]
+	ax.errorbar(pT, v1pred, xerr=(pTb[:,1]-pTb[:,0])/2., 
+			yerr=v1prederr, color=cr, fmt='D')
+	#
+	ax.set_xlabel("$p_T$ [GeV]")
+	ax.set_ylabel(r"$v_{1}$ relative to $\Psi_3$")
+	ax.legend(loc='upper right')
+	ax.set_ylim(-0.03, 0.015)
+	ax.semilogx()
+	ax.set_xlim(.3, 100)
+	ax.set_xticks([1,10,100])
+	ax.set_yticks([-0.03, -0.015, 0, 0.015])
+	ax.annotate("Pb+Pb $\sqrt{s}$=5020 GeV \n 30-50%, $|y|<0.8$", xy=(0.1, 0.8), xycoords='axes fraction',)
+	"""
+	# demo
+	import scipy.ndimage as nd
+	ax = axes[1]
+	z = np.loadtxt("trento/49.dat")
+	x1,y1 = nd.measurements.center_of_mass(z)
+	x1 = -10+0.2*x1
+	y1 = -10+0.2*y1
+	x2,y2 = 0.296*np.cos(-1.555), 0.296*np.sin(-1.555)
+	x3,y3 = 0.291*np.cos(-0.587), 0.291*np.sin(-0.587)
+	cmap1 = plt.get_cmap('Blues')
+	cmap1.set_bad('white')
+	ax.contourf(np.flipud(z.T), extent=[-10,10,-10,10], cmap=cmap1)
+	ax.arrow(x1,y1,x2*20,y2*20,head_width=.5)
+	ax.arrow(x1,y1,x3*20,y3*20,head_width=.5)
+	ax.annotate("n=2",xy=(x1+x2*20+.5, y1+y2*20), fontsize=5)
+	ax.annotate("n=3",xy=(x1+x3*20, y1+y3*20-1.5), fontsize=5)
+	ax.plot([x1-np.cos(-0.587+np.pi/2.)*20,x1+np.cos(-0.587+np.pi/2.)*20],[y1-np.sin(-0.587+np.pi/2.)*20,y1+np.sin(-0.587+np.pi/2.)*20], 'k--', linewidth=0.3)
+	ax.set_xlim(-8,8)
+	ax.set_ylim(-8,8)
+	ax.plot([1.5], [0.7], 'ro', markersize=2)
+	ax.arrow(1.5,0.7,x3*8,y3*5,head_width=.2, color='r')
+	ax.arrow(1.5,0.7,-x3*8,-y3*8,head_width=.2, color='r')
+	ax.arrow(1.5,0.7,x3*3,y3*5,head_width=.2, color='r')
+	ax.arrow(1.5,0.7,-x3*5,-y3*3,head_width=.2, color='r')
+	ax.arrow(1.5,0.7,-x3*1,y3*5,head_width=.2, color='r')
+	ax.arrow(1.5,0.7,x3*1,-y3*3,head_width=.2, color='r')
+	ax.set_xticks([])
+	ax.set_yticks([])
+	ax.axis('off')
+	ax.set_aspect('equal')
+	"""
+	set_tight(fig, rect=[0, 0, 1, 1])
 
 
-            ax.set_xlim([1,100])
-            ax.set_ylim(plot['ylim'])
-            ax.set_xticks([1,10,100])
+def _observables(posterior=False, plot_type='violins', exp_only=False):
+	"""
+	Model observables at all design points or drawn from the posterior with
+	experimental data points.
 
-            if ax.is_last_row():
-                ax.set_xlabel(r'$p_T$ [GeV]')
-                
-            #    auto_ticks(ax, 'x', nbins=5, minor=2)
+	"""
+	plots = _observables_plots()
+	nrows = len(plots)
+	ncols = [len(item['subplots']) for item in plots]
 
-            if ax.is_first_col():
-                ax.set_ylabel(plot['ylabel'])
-            else:
-                ax.set_yticks([])
-            ax.legend(loc='best')
-    #plt.suptitle(format_system(system))
-    ax1.annotate(r"EPPS", xy=(.6,.67), xycoords="axes fraction", color=cb)
-    ax1.annotate(r"nCTEQ", xy=(.6,.45), xycoords="axes fraction", color=cg)
-    plt.subplots_adjust(wspace=0.)
-    set_tight(fig, rect=[0, 0, .99, 0.99])
+	if posterior:
+		samples = {nPDF: mcmc.Chain(nPDF=nPDF).samples(400) for nPDF in ['EPPS', 'nCTEQ']}
+	fig = plt.figure(figsize=(.5*fullwidth, 0.6*fullwidth))
+
+	gs = GridSpec(4, 3)
+	ax1 = plt.subplot(gs[0, 0])
+	ax2 = plt.subplot(gs[0, 1])
+	ax3 = plt.subplot(gs[0, 2])
+	ax4 = plt.subplot(gs[1, 0])
+	ax5 = plt.subplot(gs[1, 1])
+	ax6 = plt.subplot(gs[1, 2])
+	ax7 = plt.subplot(gs[2, 0])
+	ax8 = plt.subplot(gs[2, 1])
+	ax9 = plt.subplot(gs[2, 2])
+	ax10 = plt.subplot(gs[3, 0])
+	ax11 = plt.subplot(gs[3, 1])
+	ax12 = plt.subplot(gs[3, 2])
+	system = 'PbPb5020'
+	SP={'D0': '$D^0$', 'B':'$B^{\pm}$', 'D-avg': "$D$"}
+	allaxes = [[ax1, ax2, ax3], [ax4, ax5, ax6], [ax7, ax8, ax9], [ax10, ax11], [ax12]]
+	for plot, rowax in zip(plots, allaxes):
+		for (exp, obs, specie, cen, opts), ax in zip(plot['subplots'], rowax):
+			# load exp
+			try:
+				dset = expt.data[system][exp][obs][specie][cen]
+			except KeyError:
+				pass
+
+			scale = opts.get('scale')
+			
+			print(exp, obs, specie, cen)
+			if not exp_only:
+				for nPDF in ['EPPS','nCTEQ']:
+					color = obs_color(obs, nPDF)
+					x = model.data[system][nPDF][exp][obs][specie][cen]['x']
+					Y = samples[nPDF][system][exp][obs][specie][cen] if posterior else model.data[system][nPDF][exp][obs][specie][cen]['Y']
+					w = [h-l for l, h in dset['pT'] ]
+					if scale is not None:
+						Y = Y*scale
+
+					if plot_type=='lines':
+						for y in Y:
+							ax.plot(x, y, color=color, alpha=.2, lw=.3,)
+					elif plot_type=='violins':
+						violin = ax.violinplot(list(Y.T), x, widths=w, showextrema=True, showmedians=True)
+						for b in violin['bodies']:
+							b.set_color(color)
+						for partname in ('cbars','cmins','cmaxes','cmedians'):
+							vp = violin[partname]
+							vp.set_edgecolor(color)
+							vp.set_linewidth(.5)
+					else:
+						raise KeyError("Unknown plot type")
+			# exp
+			x = dset['x']
+			y = dset['y']
+			xerr = [(ph-pl)/2. for (pl, ph) in dset['pT']]
+			yerr = np.sqrt(sum(
+				e**2 for e in dset['yerr'].values()
+			))
+
+			
+
+			if scale is not None:
+				y = y*scale
+				yerr = yerr*scale
+
+			ax.errorbar(
+				x, y, xerr=xerr, yerr=yerr, fmt='D', ms=1.7,
+				capsize=0, color='.25', zorder=1000
+			)
+			ax.set_title(label=exp+' '+opts['label'], fontsize=5)
+			ax.annotate(
+			SP[specie], (.5, .8), xycoords='axes fraction',
+			ha='center', va='bottom', fontsize=5, color='k'
+			)
+
+			if plot.get('yscale') == 'log':
+				ax.set_yscale('log')
+				#ax.minorticks_off()
+			else:
+				auto_ticks(ax, 'y', nbins=4, minor=2)
+
+			if plot.get('xscale') == 'log':
+				ax.set_xscale('log')
+				#ax.minorticks_off()
+			else:
+				auto_ticks(ax, 'x', nbins=5, minor=2)
+
+
+			ax.set_xlim([1,100])
+			ax.set_ylim(plot['ylim'])
+			ax.set_xticks([1,10,100])
+
+			if ax.is_last_row():
+				ax.set_xlabel(r'$p_T$ [GeV]')
+				
+			#	auto_ticks(ax, 'x', nbins=5, minor=2)
+
+			if ax.is_first_col():
+				ax.set_ylabel(plot['ylabel'])
+			else:
+				ax.set_yticks([])
+			ax.legend(loc='best')
+	#plt.suptitle(format_system(system))
+	if not exp_only:
+		ax1.annotate(r"EPPS", xy=(.6,.67), xycoords="axes fraction", color=cb)
+		ax1.annotate(r"nCTEQ", xy=(.6,.45), xycoords="axes fraction", color=cg)
+	plt.subplots_adjust(wspace=0.)
+	set_tight(fig, rect=[0, 0, .99, 0.99])
 
 alpha0 = 4.*np.pi/(11. - 2./3.*3)
 Lambda2 = 0.2**2
 def alpha_s(Q2, T, mu):
-    scale = (mu*np.pi*T)**2
-    Q2 = np.max([np.abs(Q2), scale])
-    if Q2 < Lambda2*2.71828:
-        return alpha0
-    else:
-        return alpha0/np.log(Q2/Lambda2)
+	scale = (mu*np.pi*T)**2
+	Q2 = np.max([np.abs(Q2), scale])
+	if Q2 < Lambda2*2.71828:
+		return alpha0
+	else:
+		return alpha0/np.log(Q2/Lambda2)
 
 def naive_LO_mD2(T, mu):
-    return alpha_s(0., T, mu)*48./np.pi*T*T
+	return alpha_s(0., T, mu)*48./np.pi*T*T
 naive_LO_mD2 = np.vectorize(naive_LO_mD2)
 
-def mD2_LO_sf(T, mu):    
-    def mD2_LO_eq(m2, T, mu):
-        return alpha_s(m2,T,mu)*48./np.pi*T*T - m2
+def mD2_LO_sf(T, mu):	
+	def mD2_LO_eq(m2, T, mu):
+		return alpha_s(m2,T,mu)*48./np.pi*T*T - m2
 
-    return brentq(mD2_LO_eq, 0.01, 100., args=(T, mu))
+	return brentq(mD2_LO_eq, 0.01, 100., args=(T, mu))
 mD2_LO_sf = np.vectorize(mD2_LO_sf)
 
 @plot
 def baseline():
-    fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-                             figsize=(0.5*fullwidth, 0.3*fullwidth))
-    for pdf in ['nCTEQ']:
-        with h5py.File('./baseline/pp-Dmesons.hdf5', 'r') as f:
-            Area = 2.* 2.*np.log(130.5/0.5)
-            dXD0 = f['/ALICE/7000/{}/D0/dX'.format(pdf)].value*1000*Area # mub/GeV
-            dXDx = f['/ALICE/7000/{}/D+/dX'.format(pdf)].value*1000*Area # mub/GeV
-            dXDstar = f['/ALICE/7000/{}/D*/dX'.format(pdf)].value*1000*Area
-            dXBp = f['/CMS/5020/{}/B+-/dX'.format(pdf)].value*1000*Area*10**6  # pb/GeV
-            pT = f['/ALICE/7000/EPPS/D0/pT'].value
+	fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
+							 figsize=(0.4*fullwidth, 0.3*fullwidth))
+	for pdf in ['nCTEQ']:
+		with h5py.File('./baseline/pp-Dmesons.hdf5', 'r') as f:
+			Area = 2.* 2.*np.log(130.5/0.5)
+			dXD0 = f['/ALICE/7000/{}/D0/dX'.format(pdf)].value*1000*Area # mub/GeV
+			dXDx = f['/ALICE/7000/{}/D+/dX'.format(pdf)].value*1000*Area # mub/GeV
+			dXDstar = f['/ALICE/7000/{}/D*/dX'.format(pdf)].value*1000*Area
+			dXBp = f['/CMS/5020/{}/B+-/dX'.format(pdf)].value*1000*Area  # mub/GeV
+			pT = f['/ALICE/7000/EPPS/D0/pT'].value
 
-        fD = interp1d(pT, (dXD0+dXDx+dXDstar), fill_value='extrapolate')
-        fBp = interp1d(pT, dXBp*4., fill_value='extrapolate')
+		fD = interp1d(pT, (dXD0+dXDx+dXDstar), fill_value='extrapolate')
+		fBp = interp1d(pT, dXBp*4., fill_value='extrapolate')
 
-        for specie, color, fonll in zip(['D', 'B+'],'rg',[fD, fBp]):
-            if specie == 'D':
-                D0 = expt.ppdata['pp7000']['dX/dp/dy']['D0']['MB']
-                Dx = expt.ppdata['pp7000']['dX/dp/dy']['D+']['MB']
-                Dstar = expt.ppdata['pp7000']['dX/dp/dy']['D*']['MB']
+		for specie, color, fonll in zip(['D', 'B+'],[cr, cb],[fD, fBp]):
+			if specie == 'D':
+				D0 = expt.ppdata['pp7000']['dX/dp/dy']['D0']['MB']
+				Dx = expt.ppdata['pp7000']['dX/dp/dy']['D+']['MB']
+				Dstar = expt.ppdata['pp7000']['dX/dp/dy']['D*']['MB']
 
-                w = [h-l for l, h in Dx['pT'] ]
-                x = Dx['x']
-                yexp = np.array(D0['y'][1:-1])\
-                     + np.array(Dx['y'])\
-                     + np.array(Dstar['y'])
-                yerr = (np.array(D0['yerr'].get('stat')[1:-1])**2 \
-                     + np.array(Dx['yerr'].get('stat'))**2 \
-                     + np.array(Dstar['yerr'].get('stat'))**2 ) **.5
-            else: 
-                B = expt.ppdata['pp5020']['dX/dp/dy']['B+']['MB']
-              
-                w = [h-l for l, h in B['pT'] ]
-                x = B['x']
-                yexp = B['y']
-                yerr = B['yerr'].get('stat')
-
-            for i, (ix, iw, il, ih, y, ystat) in \
-                enumerate(zip(x, w, yexp*0.95, yexp*1.1, yexp, yerr)):
-                # plot fonll
-                small_pT = np.linspace(ix-iw/2., ix+iw/2., 101)
-                value = fonll(small_pT).mean()
-                ax.errorbar(ix, y/value, yerr=ystat/value, fmt='D', color=color, label=specie if i==0 else '')
-                ax.fill_between(
-                    [ix-iw/2., ix+iw/2.],
-                    [il/value, il/value], [ih/value, ih/value],
-                    zorder=-10,
-                    facecolor='white', edgecolor=color
-                )
-    ax.plot([0,50], [1,1], 'k-')
-
-    ax.legend()
-    #ax.semilogy()
-    ax.set_xlim(0,50)
-    ax.set_ylim(0,5)
-    ax.set_xlabel(r'$p_T$ [GeV]')
-    ax.set_ylabel(r'$d\sigma/dp_T/dy$, Data/FONLL')
-    #ax.set_ylim(1e-3,1e3)
-    set_tight(fig, rect=[0, 0, .97, 1])
-    
+				w = [h-l for l, h in Dx['pT'] ]
+				x = Dx['x']
+				yexp = np.array(D0['y'][1:-1])\
+					 + np.array(Dx['y'])\
+					 + np.array(Dstar['y'])
+				yerr = (np.array(D0['yerr'].get('stat')[1:-1])**2 \
+					 + np.array(Dx['yerr'].get('stat'))**2 \
+					 + np.array(Dstar['yerr'].get('stat'))**2 ) **.5
+			else: 
+				B = expt.ppdata['pp5020']['dX/dp/dy']['B+']['MB']
+			  
+				w = [h-l for l, h in B['pT'] ]
+				x = B['x']
+				yexp = B['y']/10**6 # to mub/GeV
+				yerr = B['yerr'].get('stat')/10**6 # to mub/GeV
+			x0 = np.linspace(.1,50,100)
+			ax.plot(x0, fonll(x0)*(2 if specie=='D' else 1), color=color, linewidth=1., label=r"FONLL $\times$ 2, D" if specie=='D' else r"FONLL, B${}^\pm$" )
+			for i, (ix, iw, il, ih, y, ystat) in \
+				enumerate(zip(x, w, yexp*0.95, yexp*1.1, yexp, yerr)):
+				# plot fonll
+				small_pT = np.linspace(ix-iw/2., ix+iw/2., 101)
+				label = "ALICE, D" if specie == 'D' else r"CMS, B${}^\pm$"
+				ax.errorbar(ix, y, yerr=ystat, fmt='D' if specie == 'D' else 'o', color=color, label=label if i==0 else '')
+				ax.fill_between(
+					[ix-iw/2., ix+iw/2.],
+					[il, il], [ih, ih],
+					zorder=-10,
+					facecolor='white', edgecolor=color
+				)
+	ax.legend()
+	ax.semilogy()
+	ax.set_xlabel(r'$p_T$ [GeV]')
+	ax.set_ylabel(r'$d\sigma/dp_T/dy$ [$\mu$b/GeV]')
+	ax.set_title(r"Baseline: p+p $\rightarrow$ D, B")
+	set_tight(fig, rect=[0, 0, .97, 1])
+	
 @plot
 def Ds_etas():
-    def etas(T):
-        Tc = 0.154
-        return 0.085 + .83*(T-Tc)*(T/Tc)**(-0.37)
-    with h5py.File('./transport/kappa.h5', 'r') as f:
-        D2piT = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
-        for nPDF in ['EPPS','nCTEQ']:
-            gpPDF = f[nPDF]
-            for i, gp in enumerate(gpPDF):
-                gp = gpPDF[gp]
-                a = gp.attrs
-                mu, A, B = a['mu'], a['A'], a['B']
-                E = a['E']
-                T = a['T']
-                D2piT[nPDF]['c'].append(4.*np.pi/(gp['c/kd'].value+gp['c/kt'].value))
-                D2piT[nPDF]['b'].append(4.*np.pi/(gp['b/kd'].value+gp['b/kt'].value))
-    
-    fig, axes = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True,
-                             figsize=(fullwidth, 0.5*fullwidth))
-    Tc = 0.154
-    etasJB = etas(T[0:7])
+	def etas(T):
+		Tc = 0.154
+		return 0.085 + .83*(T-Tc)*(T/Tc)**(-0.37)
+	with h5py.File('./transport/kappa.h5', 'r') as f:
+		D2piT = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
+		for nPDF in ['EPPS','nCTEQ']:
+			gpPDF = f[nPDF]
+			for i, gp in enumerate(gpPDF):
+				gp = gpPDF[gp]
+				a = gp.attrs
+				mu, A, B = a['mu'], a['A'], a['B']
+				E = a['E']
+				T = a['T']
+				D2piT[nPDF]['c'].append(4.*np.pi/(gp['c/kd'].value+gp['c/kt'].value))
+				D2piT[nPDF]['b'].append(4.*np.pi/(gp['b/kd'].value+gp['b/kt'].value))
+	
+	fig, axes = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True,
+							 figsize=(fullwidth, 0.5*fullwidth))
+	Tc = 0.154
+	etasJB = etas(T[0:7])
 
-    T = T[0:7]/Tc
-    
-    for j, (ax, ptype) in enumerate(zip(axes, ['c', 'b'])):
-        for i, (nPDF, shift) in enumerate(zip(['EPPS', 'nCTEQ'], [-1,1])):
-            color = obs_color('qhat', nPDF)
+	T = T[0:7]/Tc
+	
+	for j, (ax, ptype) in enumerate(zip(axes, ['c', 'b'])):
+		for i, (nPDF, shift) in enumerate(zip(['EPPS', 'nCTEQ'], [-1,1])):
+			color = obs_color('qhat', nPDF)
 
-            res = np.array([item[0,0:7]/etasJB/2./np.pi for item in D2piT[nPDF][ptype]]).T # as function of T
-            w = (T[1]-T[0])/2.
-            mid = np.median(res, axis=1)
-            violin = ax.violinplot(list(res), T+shift*w/2., widths=w, showextrema=False, showmedians=True)
-            for b in violin['bodies']:
-                b.set_color(color)
-            for partname in ['cmedians']:
-                vp = violin[partname]
-                vp.set_edgecolor(color)
-                vp.set_linewidth(1)
-            ax.plot(T+shift*w/2., mid, 'D', color=color, label="Extract with "+nPDF)
-        ax.set_title('Charm quark' if ptype=='c' else 'Bottom quark')
+			res = np.array([item[0,0:7]/etasJB/2./np.pi for item in D2piT[nPDF][ptype]]).T # as function of T
+			w = (T[1]-T[0])/2.
+			mid = np.median(res, axis=1)
+			violin = ax.violinplot(list(res), T+shift*w/2., widths=w, showextrema=False, showmedians=True)
+			for b in violin['bodies']:
+				b.set_color(color)
+			for partname in ['cmedians']:
+				vp = violin[partname]
+				vp.set_edgecolor(color)
+				vp.set_linewidth(1)
+			ax.plot(T+shift*w/2., mid, 'D', color=color, label="Extract with "+nPDF)
+		ax.set_title('Charm quark' if ptype=='c' else 'Bottom quark')
 
-        if ax.is_first_col():
-            ax.set_ylabel(r'$(D_s T) / (\eta/s)$')
-            ax.legend(framealpha=0., loc='upper left')
-        ax.set_xlabel(r'$T/T_c$')
-        ax.set_xlim(0.5, 3.5)
-        ax.set_ylim(0.0, 16.)
+		if ax.is_first_col():
+			ax.set_ylabel(r'$(D_s T) / (\eta/s)$')
+			ax.legend(framealpha=0., loc='upper left')
+		ax.set_xlabel(r'$T/T_c$')
+		ax.set_xlim(0.5, 3.5)
+		ax.set_ylim(0.0, 16.)
 
-    set_tight(fig, rect=[0, 0, .97, 1])
+	set_tight(fig, rect=[0, 0, .97, 1])
 
 @plot
 def Ds_ratio():
-    with h5py.File('./transport/kappa.h5', 'r') as f:
-        D2piT = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
-        for nPDF in ['EPPS','nCTEQ']:
-            gpPDF = f[nPDF]
-            for i, gp in enumerate(gpPDF):
-                gp = gpPDF[gp]
-                a = gp.attrs
-                mu, A, B = a['mu'], a['A'], a['B']
-                E = a['E']
-                T = a['T']
-                D2piT[nPDF]['c'].append(4.*np.pi/(gp['c/kd'].value+gp['c/kt'].value))
-                D2piT[nPDF]['b'].append(4.*np.pi/(gp['b/kd'].value+gp['b/kt'].value))
-    
-    fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-                             figsize=(0.5*fullwidth, 0.5*fullwidth))
-    Tc = 0.154
-    T = T[0:7]/Tc
-    
-    for i, (nPDF, shift) in enumerate(zip(['EPPS', 'nCTEQ'], [-1,1])):
-        color = obs_color('qhat', nPDF)
+	with h5py.File('./transport/kappa.h5', 'r') as f:
+		D2piT = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
+		for nPDF in ['EPPS','nCTEQ']:
+			gpPDF = f[nPDF]
+			for i, gp in enumerate(gpPDF):
+				gp = gpPDF[gp]
+				a = gp.attrs
+				mu, A, B = a['mu'], a['A'], a['B']
+				E = a['E']
+				T = a['T']
+				D2piT[nPDF]['c'].append(4.*np.pi/(gp['c/kd'].value+gp['c/kt'].value))
+				D2piT[nPDF]['b'].append(4.*np.pi/(gp['b/kd'].value+gp['b/kt'].value))
+	
+	fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
+							 figsize=(0.5*fullwidth, 0.5*fullwidth))
+	Tc = 0.154
+	T = T[0:7]/Tc
+	
+	for i, (nPDF, shift) in enumerate(zip(['EPPS', 'nCTEQ'], [-1,1])):
+		color = obs_color('qhat', nPDF)
 
-        resc = np.array([item[0,0:7] for item in D2piT[nPDF]['c']]).T # as function of T
-        resb = np.array([item[0,0:7] for item in D2piT[nPDF]['b']]).T # as function of T
-        res = resc/resb
-        w = (T[1]-T[0])/2.
-        mid = np.median(res, axis=1)
-        violin = ax.violinplot(list(res), T+shift*w/2., widths=w, showextrema=False, showmedians=True)
-        for b in violin['bodies']:
-            b.set_color(color)
-        for partname in ['cmedians']:
-            vp = violin[partname]
-            vp.set_edgecolor(color)
-            vp.set_linewidth(1)
-        ax.plot(T+shift*w/2., mid, 'D', color=color, label="Extract with "+nPDF)
+		resc = np.array([item[0,0:7] for item in D2piT[nPDF]['c']]).T # as function of T
+		resb = np.array([item[0,0:7] for item in D2piT[nPDF]['b']]).T # as function of T
+		res = resc/resb
+		w = (T[1]-T[0])/2.
+		mid = np.median(res, axis=1)
+		violin = ax.violinplot(list(res), T+shift*w/2., widths=w, showextrema=False, showmedians=True)
+		for b in violin['bodies']:
+			b.set_color(color)
+		for partname in ['cmedians']:
+			vp = violin[partname]
+			vp.set_edgecolor(color)
+			vp.set_linewidth(1)
+		ax.plot(T+shift*w/2., mid, 'D', color=color, label="Extract with "+nPDF)
 
-    ax.set_ylabel(r'$D_{s,\mathrm{charm}} / D_{s,\mathrm{bottom}}$')
-    ax.legend(framealpha=0., loc='upper left')
-    ax.set_xlabel(r'$T/T_c$')
-    ax.set_xlim(0.5, 3.5)
-    ax.set_ylim(0.0, 1.5)
+	ax.set_ylabel(r'$D_{s,\mathrm{charm}} / D_{s,\mathrm{bottom}}$')
+	ax.legend(framealpha=0., loc='upper left')
+	ax.set_xlabel(r'$T/T_c$')
+	ax.set_xlim(0.5, 3.5)
+	ax.set_ylim(0.0, 1.5)
 
-    set_tight(fig, rect=[0, 0, .97, 1])
+	set_tight(fig, rect=[0, 0, .97, 1])
 
 @plot
 def qhat_full(pQCD=False):
-    with h5py.File('./transport/full-qhat.hdf5', 'r') as f:
-        qhat_full = f['full/qhat'].value
-        qhat_coll = f['coll/qhat'].value
-        p = f['full'].attrs['p']
-        T = f['full'].attrs['T']
-    Ec = (1.3**2+p**2)**0.5
-    Eb = (4.2**2+p**2)**0.5 
-    Tc = 0.154
-    D = 0.44
-    x = 0.4
-    qhat_diff = D*(x+(1-x)/np.transpose([np.outer(T, Ec), np.outer(T, Eb)], (1, 2, 0)) ) 
-    qhat_full += qhat_diff
-    qhat_coll += qhat_diff
+	with h5py.File('./transport/full-qhat.hdf5', 'r') as f:
+		qhat_full = f['full/qhat'].value
+		qhat_coll = f['coll/qhat'].value
+		p = f['full'].attrs['p']
+		T = f['full'].attrs['T']
+	Ec = (1.3**2+p**2)**0.5
+	Eb = (4.2**2+p**2)**0.5 
+	Tc = 0.154
+	D = 0.44
+	x = 0.4
+	qhat_diff = D*(x+(1-x)/np.transpose([np.outer(T, Ec), np.outer(T, Eb)], (1, 2, 0)) ) 
+	qhat_full += qhat_diff
+	qhat_coll += qhat_diff
 
-    fig, axes = plt.subplots(nrows=1, ncols=2, sharex=False, sharey=True,
-                             figsize=(fullwidth*0.5, 0.3*fullwidth))
-    ax1, ax2 = axes
-    # plot qhat
-    ax1.plot(T, qhat_coll[:, 2, 0], '--', linewidth=1., color=cr, label='c, w/o inel')
-    ax1.plot(T, qhat_full[:, 2, 0], '-', linewidth=1., color=cr, label='c, w inel')
-    ax1.plot(T, qhat_coll[:, 2, 1], '--', color=cb, label='b, w/o inel')
-    ax1.plot(T, qhat_full[:, 2, 1], '-', color=cb, label='b, w/ inel')
-      
-    ax1.set_ylabel(r'$\hat{q}/T^3$, $p=10$ GeV')
-    ax1.set_xlabel(r'$T$ [GeV]')
-    ax1.legend(loc='upper right', fontsize=5)
-    
-    ax2.plot(T/Tc, 8*np.pi/qhat_coll[:, 0, 0], '--', linewidth=1.3, color=cr)
-    ax2.plot(T/Tc, 8*np.pi/qhat_full[:, 0, 0], '-', linewidth=1.3, color=cr)
-    ax2.plot(T/Tc, 8*np.pi/qhat_coll[:, 0, 1], '--', color=cb)
-    ax2.plot(T/Tc, 8*np.pi/qhat_full[:, 0, 1], '-', color=cb)
-    
-    ax2.set_ylabel(r'$2\pi T D_s$, $p=0$')
-    ax2.set_xlabel(r'$T/T_c$')
-    # lattice 1
-    _,caps,_ = ax2.errorbar(lattice2_x, lattice2_y,  yerr=lattice2_stat, fmt='D', color=cb, linewidth=1., label='LQCD, static', capsize=1.5)
-    for cap in caps:
-        cap.set_markeredgewidth(.05)
-    ax2.errorbar(lattice2_x, lattice2_y,  yerr=np.array(lattice2_sys).T, fmt='D', color=cb, linewidth=0.6, markersize=1)
+	fig, axes = plt.subplots(nrows=2, ncols=1, sharex=False, sharey=True,
+							 figsize=(fullwidth*0.3, 0.5*fullwidth))
+	ax1, ax2 = axes
+	# plot qhat
+	ax1.plot(T, qhat_coll[:, 2, 0], '--', linewidth=1., color=cr, label='c, w/o inel')
+	ax1.plot(T, qhat_full[:, 2, 0], '-', linewidth=1., color=cr, label='c, w inel')
+	ax1.plot(T, qhat_coll[:, 2, 1], '--', color=cb, label='b, w/o inel')
+	ax1.plot(T, qhat_full[:, 2, 1], '-', color=cb, label='b, w/ inel')
+	  
+	ax1.set_ylabel(r'$\hat{q}/T^3$, $p=10$ GeV')
+	ax1.set_xlabel(r'$T$ [GeV]')
+	ax1.legend(loc='upper right', fontsize=5)
+	
+	ax2.plot(T/Tc, 8*np.pi/qhat_coll[:, 0, 0], '--', linewidth=1.3, color=cr)
+	ax2.plot(T/Tc, 8*np.pi/qhat_full[:, 0, 0], '-', linewidth=1.3, color=cr)
+	ax2.plot(T/Tc, 8*np.pi/qhat_coll[:, 0, 1], '--', color=cb)
+	ax2.plot(T/Tc, 8*np.pi/qhat_full[:, 0, 1], '-', color=cb)
+	
+	ax2.set_ylabel(r'$2\pi T D_s$, $p=0$')
+	ax2.set_xlabel(r'$T/T_c$')
+	# lattice 1
+	_,caps,_ = ax2.errorbar(lattice2_x, lattice2_y,  yerr=lattice2_stat, fmt='D', color=cb, linewidth=1., label='LQCD, static', capsize=1.5)
+	for cap in caps:
+		cap.set_markeredgewidth(.05)
+	ax2.errorbar(lattice2_x, lattice2_y,  yerr=np.array(lattice2_sys).T, fmt='D', color=cb, linewidth=0.6, markersize=1)
 
-    # lattice 2
-    _,caps,_ = ax2.errorbar(lattice1_x, lattice1_y,  yerr=lattice1_stat, fmt='D', color=cr, label='LQCD, charm', capsize=1.5)
-    for cap in caps:
-        cap.set_markeredgewidth(.05)
-    ax2.errorbar(lattice1_x, lattice1_y,  yerr=np.array(lattice1_sys).T, fmt='D', color=cr, linewidth=0.6, markersize=1)
-    ax2.set_xlabel(r'$T/T_c$')
-    ax2.legend(loc='upper right', fontsize=5)
+	# lattice 2
+	_,caps,_ = ax2.errorbar(lattice1_x, lattice1_y,  yerr=lattice1_stat, fmt='D', color=cr, label='LQCD, charm', capsize=1.5)
+	for cap in caps:
+		cap.set_markeredgewidth(.05)
+	ax2.errorbar(lattice1_x, lattice1_y,  yerr=np.array(lattice1_sys).T, fmt='D', color=cr, linewidth=0.6, markersize=1)
+	ax2.set_xlabel(r'$T/T_c$')
+	ax2.legend(loc='upper right', fontsize=5)
 
 
-    ax2.set_ylim(0,25)
-    ax2.set_xlim(.5, 4)
-    plt.suptitle("$\mu = 0.6, \kappa_D = 0.44, x_D = 0.4$")
-    set_tight(fig, rect=[0, 0, .97, .9])
+	ax2.set_ylim(0,25)
+	ax2.set_xlim(.5, 4)
+	plt.suptitle("$\mu = 0.6, \kappa_D = 0.44, x_D = 0.4$")
+	set_tight(fig, rect=[0, 0, .97, .9])
 
 
 def _qhat_p_T(pQCD=False):
-    with h5py.File('./transport/kappa.h5', 'r') as f:
-        qhat = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
-        for nPDF in ['EPPS','nCTEQ']:
-            gpPDF = f[nPDF]
-            for i, gp in enumerate(gpPDF):
-                gp = gpPDF[gp]
-                a = gp.attrs
-                mu, A, B = a['mu'], a['A'], a['B']
-                E = a['E']
-                T = a['T']
-                w = 0. if pQCD == True else 1.
-                qhat[nPDF]['c'].append(2.*(gp['c/kd'].value*w+gp['c/kt'].value))
-                qhat[nPDF]['b'].append(2.*(gp['b/kd'].value*w+gp['b/kt'].value))
-    
-    fig, axes = plt.subplots(nrows=1, ncols=1, sharex=False, sharey=True,
-                             figsize=(fullwidth*0.25, 0.3*fullwidth))
-    #axT, axE = axes
-    axT = axes
-    for i, (E, ptype) in enumerate(zip([np.linspace(1.3, 130, 100), np.linspace(4.3, 130, 60)], ['c', 'b'])):
-        M = 4.2 if ptype=='b' else 1.3
-        color = [cr, cb][i]
-        Aqhat = np.concatenate([qhat[nPDF][ptype] for nPDF in ['EPPS', 'nCTEQ']], axis=0) # as function of (index, E, T)
-        low5 = np.percentile(Aqhat, 5, axis=0)
-        low95 = np.percentile(Aqhat, 95, axis=0)
+	with h5py.File('./transport/kappa.h5', 'r') as f:
+		qhat = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
+		for nPDF in ['EPPS','nCTEQ']:
+			gpPDF = f[nPDF]
+			for i, gp in enumerate(gpPDF):
+				gp = gpPDF[gp]
+				a = gp.attrs
+				mu, A, B = a['mu'], a['A'], a['B']
+				E = a['E']
+				T = a['T']
+				w = 0. if pQCD == True else 1.
+				qhat[nPDF]['c'].append(2.*(gp['c/kd'].value*w+gp['c/kt'].value))
+				qhat[nPDF]['b'].append(2.*(gp['b/kd'].value*w+gp['b/kt'].value))
+	
+	fig, axes = plt.subplots(nrows=1, ncols=2, sharex=False, sharey=True,
+							 figsize=(fullwidth*0.5, 0.3*fullwidth))
+	axT, axE = axes
+	for i, (E, ptype) in enumerate(zip([np.linspace(1.3, 130, 100), np.linspace(4.3, 130, 60)], ['c'])):
+		M = 4.2 if ptype=='b' else 1.3
+		color = [cr, cb][i]
+		Aqhat = np.concatenate([qhat[nPDF][ptype] for nPDF in ['EPPS', 'nCTEQ']], axis=0) # as function of (index, E, T)
+		low5 = np.percentile(Aqhat, 2.5, axis=0)
+		low95 = np.percentile(Aqhat, 97.5, axis=0)
  
-        Elow5 = np.array([interp1d(T, low5[ie,:])(0.35) for ie,ee in enumerate(E)])
-        Elow95 = np.array([interp1d(T, low95[ie,:])(0.35) for ie,ee in enumerate(E)])       
-        #axE.fill_between(np.sqrt(E**2-M**2), Elow5, Elow95, #alpha=0.6, 
-        #    hatch='///' if ptype=='c' else "", 
-        #    facecolor="None", edgecolor=color, linewidth=1.2, 
-        #    label='{}, 90% CL'.format(ptype))
+		Elow5 = np.array([interp1d(T, low5[ie,:])(0.35) for ie,ee in enumerate(E)])
+		Elow95 = np.array([interp1d(T, low95[ie,:])(0.35) for ie,ee in enumerate(E)])	   
+		axE.fill_between(np.sqrt(E**2-M**2), Elow5, Elow95, #alpha=0.6, 
+			hatch='' if ptype=='c' else "", 
+			facecolor="None", edgecolor=color, linewidth=1.2, 
+			label='Linear. Boltzmann' if ptype=='c' else 'Bottom, 90% CL' )
 
-        Tlow5 = np.array([interp1d(E, low5[:,it])(np.sqrt(M**2+10**2)) for it,et in enumerate(T)])
-        Tlow95 = np.array([interp1d(E, low95[:,it])(np.sqrt(M**2+10**2)) for it,et in enumerate(T)])
-        axT.fill_between(T, Tlow5, Tlow95, #alpha=0.6, 
-            hatch='' if ptype=='c' else "", 
-            facecolor="None", edgecolor=color, linewidth=1.2, 
-            label='{}, 90% CL'.format(ptype))
+		Tlow5 = np.array([interp1d(E, low5[:,it])(np.sqrt(M**2+10**2)) for it,et in enumerate(T)])
+		Tlow95 = np.array([interp1d(E, low95[:,it])(np.sqrt(M**2+10**2)) for it,et in enumerate(T)])
+		axT.fill_between(T, Tlow5, Tlow95, #alpha=0.6, 
+			hatch='' if ptype=='c' else "", 
+			facecolor="None", edgecolor=color, linewidth=1.2, 
+			label='Linear. Boltzmann' if ptype=='c' else 'Bottom, 90% CL' )
 
-    # plot YX's results
-    samples = 8*np.pi/np.loadtxt("./YXLGV/YX-p10.dat") #[index, T]
-    yxT = np.linspace(0.15, 0.75, 31) 
-    low5 = np.percentile(samples, 5, axis=0)
-    low95 = np.percentile(samples, 95, axis=0)
-    axT.fill_between(yxT, low5, low95, color='gray', alpha=0.3, label='$c$, Xu et al')
-      
-    samples = 8*np.pi/np.loadtxt("./YXLGV/YX-T3d5.dat") #[index, E]
-    yxE = np.linspace(1.3*1.01, 140, 101)
-    yxp = (yxE**2 - 1.3**2)**0.5
-    low5 = np.percentile(samples, 5, axis=0)
-    low95 = np.percentile(samples, 95, axis=0)
-    #axE.fill_between(yxp, low5, low95, color='gray', alpha=0.3, label='$c$, Xu et al')
-      
-    axT.set_ylabel(r'$\hat{q}/T^3$')
-    #axT.legend(framealpha=0., loc='upper right', fontsize=5)
-    axT.set_xlabel(r'$T$ [GeV]')
-    axT.set_xlim(0.15, 0.65)
-    axT.set_ylim(0.0, 25)
-    axT.minorticks_off()
-    #axT.set_title(r"$p = 10$ [GeV]")
-    axT.annotate(r"$p = 10$ [GeV]", xy=(.3,.6), xycoords="axes fraction")
-    axT.legend(framealpha=0., loc='upper right', fontsize=5)
-    #axE.legend(framealpha=0., loc='upper right', fontsize=5)
-    #axE.set_xlabel(r'$p$ [GeV]')
-    #axE.set_xlim(1, 50)
-    #axE.set_title(r"$T = 0.35$ [GeV]")
+	# plot YX's results
+  
+	T, mid, low, high = np.loadtxt("YXLGV-new/Data_posterior_qT3_run97_std0.05_p10_95CR.dat").T
+	axT.fill_between(T, low, high, color='gray', alpha=0.3, label='Improved Lanegvin')
+
+	E, mid, low, high = np.loadtxt("./YXLGV-new/Data_posterior_qT3_run97_std0.05_T0.35_95CR.dat").T
+	axE.fill_between(E, low, high, color='gray', alpha=0.3, label='Improved Lanegvin')
 
 
-    set_tight(fig, rect=[0, 0, .97, 1])
+	  
+	axT.set_ylabel(r'$\hat{q}/T^3$')
+	#axT.legend(framealpha=0., loc='upper right', fontsize=5)
+	axT.set_xlabel(r'$T$ [GeV]')
+	axT.set_xlim(0.15, 0.65)
+	axT.set_ylim(0.0, 20)
+	axT.minorticks_off()
+	axT.set_title(r"$p = 10$ [GeV]")
+	axE.legend(framealpha=0., loc='upper right', fontsize=5)
+	axE.set_xlabel(r'$p$ [GeV]')
+	axE.set_xlim(1, 100)
+	axE.set_title(r"$T = 0.35$ [GeV]")
+
+
+	set_tight(fig, rect=[0, 0, .97, 1])
 
 @plot
 def qhat_p_T():
-    _qhat_p_T(pQCD=False)
+	_qhat_p_T(pQCD=False)
 
 @plot
 def qhat_p_T_pQCD_only():
-    _qhat_p_T(pQCD=True)
+	_qhat_p_T(pQCD=True)
 
 @plot
 def qhat_contribution():
-    with h5py.File('./transport/kappa.h5', 'r') as f:
-        qhat = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
-        for nPDF in ['EPPS','nCTEQ']:
-            gpPDF = f[nPDF]
-            for i, gp in enumerate(gpPDF):
-                gp = gpPDF[gp]
-                a = gp.attrs
-                mu, A, B = a['mu'], a['A'], a['B']
-                E = a['E']
-                T = a['T']
-                qhat[nPDF]['c'].append(gp['c/kt'].value/(gp['c/kt'].value+gp['c/kd'].value))
-                qhat[nPDF]['b'].append(gp['b/kt'].value/(gp['b/kt'].value+gp['b/kd'].value))
-    
-    fig, axes = plt.subplots(nrows=1, ncols=2, sharex=False, sharey=True,
-                             figsize=(fullwidth*0.5, 0.35*fullwidth))
-    axT, axE = axes
-    for i, (E, ptype) in enumerate(zip([np.linspace(1.3, 130, 100), np.linspace(4.3, 130, 60)], ['c', 'b'])):
-        M = 4.2 if ptype=='b' else 1.3
-        Aqhat = np.concatenate([qhat[nPDF][ptype] for nPDF in ['EPPS', 'nCTEQ']], axis=0) # as function of (index, E, T)
-        low5 = np.percentile(Aqhat, 5, axis=0)
-        low95 = np.percentile(Aqhat, 95, axis=0)
+	with h5py.File('./transport/kappa.h5', 'r') as f:
+		qhat = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
+		for nPDF in ['EPPS','nCTEQ']:
+			gpPDF = f[nPDF]
+			for i, gp in enumerate(gpPDF):
+				gp = gpPDF[gp]
+				a = gp.attrs
+				mu, A, B = a['mu'], a['A'], a['B']
+				E = a['E']
+				T = a['T']
+				qhat[nPDF]['c'].append(gp['c/kt'].value/(gp['c/kt'].value+gp['c/kd'].value))
+				qhat[nPDF]['b'].append(gp['b/kt'].value/(gp['b/kt'].value+gp['b/kd'].value))
+	
+	fig, axes = plt.subplots(nrows=1, ncols=2, sharex=False, sharey=True,
+							 figsize=(fullwidth*0.5, 0.35*fullwidth))
+	axT, axE = axes
+	for i, (E, ptype) in enumerate(zip([np.linspace(1.3, 130, 100), np.linspace(4.3, 130, 60)], ['c', 'b'])):
+		M = 4.2 if ptype=='b' else 1.3
+		Aqhat = np.concatenate([qhat[nPDF][ptype] for nPDF in ['EPPS', 'nCTEQ']], axis=0) # as function of (index, E, T)
+		low5 = np.percentile(Aqhat, 5, axis=0)
+		low95 = np.percentile(Aqhat, 95, axis=0)
  
-        Elow5 = np.array([interp1d(T, low5[ie,:])(0.35) for ie,ee in enumerate(E)])
-        Elow95 = np.array([interp1d(T, low95[ie,:])(0.35) for ie,ee in enumerate(E)])       
-        axE.fill_between((E**2-M**2)**0.5, Elow5, Elow95, facecolor="None", edgecolor=ptype, label='$c$, 90% CL' if ptype =='c' else '$b$, 90% CL')
+		Elow5 = np.array([interp1d(T, low5[ie,:])(0.35) for ie,ee in enumerate(E)])
+		Elow95 = np.array([interp1d(T, low95[ie,:])(0.35) for ie,ee in enumerate(E)])	   
+		axE.fill_between((E**2-M**2)**0.5, Elow5, Elow95, facecolor="None", edgecolor=ptype, label='$c$, 90% CL' if ptype =='c' else '$b$, 90% CL')
 
-        Tlow5 = np.array([interp1d(E, low5[:,it])((10.**2+M**2)**.5) for it,et in enumerate(T)])
-        Tlow95 = np.array([interp1d(E, low95[:,it])((10.**2+M**2)**.5) for it,et in enumerate(T)])
-        axT.fill_between(T, Tlow5, Tlow95, facecolor="None", edgecolor=ptype, label='$c$, 90% CL' if ptype =='c' else '$b$, 90% CL')
+		Tlow5 = np.array([interp1d(E, low5[:,it])((10.**2+M**2)**.5) for it,et in enumerate(T)])
+		Tlow95 = np.array([interp1d(E, low95[:,it])((10.**2+M**2)**.5) for it,et in enumerate(T)])
+		axT.fill_between(T, Tlow5, Tlow95, facecolor="None", edgecolor=ptype, label='$c$, 90% CL' if ptype =='c' else '$b$, 90% CL')
  
 
-    
-    axT.set_ylabel(r'pQCD-$\hat{q}$ / $\hat{q}$')
-    axT.legend(framealpha=0., loc='upper right', fontsize=5)
-    axT.set_xlabel(r'$T$ [GeV]')
-    axT.set_xlim(0.15, 0.65)
-    axT.set_ylim(0.0, 1.5)
-    axT.minorticks_off()
-    axT.set_title(r"$p = 10$ [GeV]")
-    axE.legend(framealpha=0., loc='upper right', fontsize=5)
-    axE.set_xlabel(r'$p$ [GeV]')
-    axE.set_xlim(1, 50)
-    axE.set_title(r"$T = 0.35$ [GeV]")
+	
+	axT.set_ylabel(r'pQCD-$\hat{q}$ / $\hat{q}$')
+	axT.legend(framealpha=0., loc='upper right', fontsize=5)
+	axT.set_xlabel(r'$T$ [GeV]')
+	axT.set_xlim(0.15, 0.65)
+	axT.set_ylim(0.0, 1.5)
+	axT.minorticks_off()
+	axT.set_title(r"$p = 10$ [GeV]")
+	axE.legend(framealpha=0., loc='upper right', fontsize=5)
+	axE.set_xlabel(r'$p$ [GeV]')
+	axE.set_xlim(1, 50)
+	axE.set_title(r"$T = 0.35$ [GeV]")
 
 
-    set_tight(fig, rect=[0, 0, .97, 1])
+	set_tight(fig, rect=[0, 0, .97, 1])
 
 lattice1_x = [1.46, 2.20, 2.93]
 lattice1_y = [1.8, 2.0, 2.3]
@@ -1272,765 +1454,773 @@ lattice2_stat = [0.827511828685804,
 0.157638419496596,
 4.01977969716318,
 ]
-lattice2_sys = [(1.61552417882614,    3.27117695189699),
-(2.20684799928101,    3.94131998210016),
-(1.41865590179804,    4.25650694742203),
-(1.45806550667218,    2.71917286264494),
-(5.911350857451,    6.6604928447451),
+lattice2_sys = [(1.61552417882614,	3.27117695189699),
+(2.20684799928101,	3.94131998210016),
+(1.41865590179804,	4.25650694742203),
+(1.45806550667218,	2.71917286264494),
+(5.911350857451,	6.6604928447451),
 ]
 yx =  {'l':np.array([ 0.9902318363359932, 1.1245992295754803,
-        1.235554540226716, 1.7900947669426444,
-        1.473897733628479, 2.042333960911595,
-        1.6941698242518295, 2.398399281567322,
-        1.9812908155628908, 2.649378067321557,
-        2.286482909652364, 2.796530726389012,
-        2.530923327792789, 3.0486123693311207,
-        2.7872273382541777, 3.1453486998101567,
-        3.074238043846451, 3.3446507487612607,
-        3.3671254027398128, 3.4404417730792574]).reshape(-1,2),
-       'h':
-        np.array([0.9936506936183955, 2.726578070472577,
-        1.238752826071544, 3.2887201342334755,
-        1.4722119376413036, 4.109560984063716,
-        1.6881513750265866, 5.292611644596398,
-        1.984126734045989, 6.835351299402099,
-        2.273894582607942, 8.326571768431506,
-        2.53295573603901, 9.715226518988842,
-        2.7919066037512903, 11.052204532743046,
-        3.0821155951883923, 12.750131948984983,
-        3.4090182207762543, 14.498790795869017]).reshape(-1,2)
-      }
+		1.235554540226716, 1.7900947669426444,
+		1.473897733628479, 2.042333960911595,
+		1.6941698242518295, 2.398399281567322,
+		1.9812908155628908, 2.649378067321557,
+		2.286482909652364, 2.796530726389012,
+		2.530923327792789, 3.0486123693311207,
+		2.7872273382541777, 3.1453486998101567,
+		3.074238043846451, 3.3446507487612607,
+		3.3671254027398128, 3.4404417730792574]).reshape(-1,2),
+	   'h':
+		np.array([0.9936506936183955, 2.726578070472577,
+		1.238752826071544, 3.2887201342334755,
+		1.4722119376413036, 4.109560984063716,
+		1.6881513750265866, 5.292611644596398,
+		1.984126734045989, 6.835351299402099,
+		2.273894582607942, 8.326571768431506,
+		2.53295573603901, 9.715226518988842,
+		2.7919066037512903, 11.052204532743046,
+		3.0821155951883923, 12.750131948984983,
+		3.4090182207762543, 14.498790795869017]).reshape(-1,2)
+	  }
 
 @plot
 def Ds_posterior():
 
-    with h5py.File('./transport/kappa.h5', 'r') as f:
-        D2piT = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
-        for nPDF in ['EPPS','nCTEQ']:
-            gpPDF = f[nPDF]
-            for i, gp in enumerate(gpPDF):
-                gp = gpPDF[gp]
-                a = gp.attrs
-                mu, A, B = a['mu'], a['A'], a['B']
-                E = a['E']
-                T = a['T']
-                D2piT[nPDF]['c'].append(4.*np.pi/(gp['c/kd'].value+gp['c/kt'].value))
-                D2piT[nPDF]['b'].append(4.*np.pi/(gp['b/kd'].value+gp['b/kt'].value))    
+	with h5py.File('./transport/kappa.h5', 'r') as f:
+		D2piT = {'EPPS':{'c': [],'b': []},'nCTEQ':{'c':[],'b':[]}}
+		for nPDF in ['EPPS','nCTEQ']:
+			gpPDF = f[nPDF]
+			for i, gp in enumerate(gpPDF):
+				gp = gpPDF[gp]
+				a = gp.attrs
+				mu, A, B = a['mu'], a['A'], a['B']
+				E = a['E']
+				T = a['T']
+				D2piT[nPDF]['c'].append(4.*np.pi/(gp['c/kd'].value+gp['c/kt'].value))
+				D2piT[nPDF]['b'].append(4.*np.pi/(gp['b/kd'].value+gp['b/kt'].value))	
 
-    fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-                             figsize=(fullwidth*0.3, 0.3*fullwidth))
-    Tc = 0.154
-    T = T[0:8]/Tc
-    for j, ptype in enumerate(['c', 'b']):
-        color = [cr, cb][j]
-        res = np.concatenate([np.array([item[0,0:8] for item in D2piT['EPPS'][ptype]]), np.array([item[0,0:8] for item in D2piT['nCTEQ'][ptype]])], axis=0)
-        high = np.percentile(res, 95, axis=0)
-        low = np.percentile(res, 5, axis=0)
-        mid = np.median(res, axis=0)
-        ax.fill_between(T, low, high, #alpha=0.6, 
-            hatch='' if ptype=='c' else "", 
-            facecolor="None", edgecolor=color, linewidth=1.2, )
-            #label='{}-quark, 90% CL'.format(ptype))
+	fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
+							 figsize=(fullwidth*0.5, 0.35*fullwidth))
+	Tc = 0.154
+	T = T[0:8]/Tc
+	for j, ptype in enumerate(['c', 'b']):
+		color = [cr, cb][j]
+		res = np.concatenate([np.array([item[0,0:8] for item in D2piT['EPPS'][ptype]]), np.array([item[0,0:8] for item in D2piT['nCTEQ'][ptype]])], axis=0)
+		high = np.percentile(res, 97.5, axis=0)
+		low = np.percentile(res, 2.5, axis=0)
+		mid = np.median(res, axis=0)
+		
+		if ptype=='c':
+			with open('c-95percent.dat','w') as f:
+				for t, l, h in zip(T, low, high):
+					f.write("{:1.4f}\t{:1.4f}\t{:1.4f}\n".format(t, l,h))
+		ax.fill_between(T, low, high, #alpha=0.6, 
+			hatch='///' if ptype=='c' else "", 
+			facecolor="None", edgecolor=color, linewidth=1.2,
+			label='Charm, 90% CL' if ptype=='c' else 'Bottom, 90% CL')
 
-    # lattice 3
-    kappa_l = 1.8
-    kappa_h = 3.4
-    kappa_m = (1.8+3.4)/2.
-    Dl = 4*np.pi/kappa_h
-    Dh = 4*np.pi/kappa_l
-    Dm = 4*np.pi/kappa_m
-    ax.errorbar([1.5], [Dm], yerr=[[Dm-Dl], [Dh-Dm]], fmt='sk', label='lattice, static${}^*$', zorder=10)
-    # lattice 1
-    _,caps,_ = ax.errorbar(lattice2_x, lattice2_y,  yerr=lattice2_stat, fmt='o', color=cb, linewidth=1., label='lattice, static', capsize=1.5)
-    for cap in caps:
-        cap.set_markeredgewidth(.05)
-    ax.errorbar(lattice2_x, lattice2_y,  yerr=np.array(lattice2_sys).T, fmt='o', color=cb, linewidth=0.6, markersize=1)
+	# lattice 3
+	kappa_l = 1.8
+	kappa_h = 3.4
+	kappa_m = (1.8+3.4)/2.
+	Dl = 4*np.pi/kappa_h
+	Dh = 4*np.pi/kappa_l
+	Dm = 4*np.pi/kappa_m
+	ax.errorbar([1.5], [Dm], yerr=[[Dm-Dl], [Dh-Dm]], fmt='sk', label='lattice, static, continuum', zorder=10)
+	# lattice 1
+	_,caps,_ = ax.errorbar(lattice2_x, lattice2_y,  yerr=lattice2_stat, fmt='o', color=cb, linewidth=1., label='lattice, static', capsize=1.5)
+	for cap in caps:
+		cap.set_markeredgewidth(.05)
+	ax.errorbar(lattice2_x, lattice2_y,  yerr=np.array(lattice2_sys).T, fmt='o', color=cb, linewidth=0.6, markersize=1)
 
-    # lattice 2
-    _,caps,_ = ax.errorbar(lattice1_x, lattice1_y,  yerr=lattice1_stat, fmt='^', color=cr, label='lattice, charm', capsize=1.5)
-    for cap in caps:
-        cap.set_markeredgewidth(.05)
-    ax.errorbar(lattice1_x, lattice1_y,  yerr=np.array(lattice1_sys).T, fmt='^', color=cr, linewidth=0.6, markersize=1)
-    
+	# lattice 2
+	_,caps,_ = ax.errorbar(lattice1_x, lattice1_y,  yerr=lattice1_stat, fmt='^', color=cr, label='lattice, charm', capsize=1.5)
+	for cap in caps:
+		cap.set_markeredgewidth(.05)
+	ax.errorbar(lattice1_x, lattice1_y,  yerr=np.array(lattice1_sys).T, fmt='^', color=cr, linewidth=0.6, markersize=1)
+	
 
    
-    # Xu
-    ax.fill_between(yx['l'][:,0], yx['l'][:,1], yx['h'][:,1], color='gray',alpha=0.3)#, label="c, Xu et al")
+	# Xu
+	ax.fill_between(yx['l'][:,0], yx['l'][:,1], yx['h'][:,1], color='gray',alpha=0.3, label="Charm, Xu et al")
 
 
-    ax.set_xlabel(r'$T/T_c$')
-    ax.set_ylabel(r'$D_s 2\pi T$')
-    ax.legend(framealpha=0., loc='upper left')
-    ax.minorticks_off()
-    ax.set_xlim(0.5, 3.5)
-    ax.set_ylim(0.0, 27)
-    ax.set_yticks([0,5,10,15,20, 25])
+	ax.set_xlabel(r'$T/T_c$')
+	ax.set_ylabel(r'$D_s 2\pi T$')
+	ax.legend(framealpha=0., loc='upper left')
+	ax.minorticks_off()
+	ax.set_xlim(0.5, 3.5)
+	ax.set_ylim(0.0, 27)
+	ax.set_yticks([0,5,10,15,20, 25])
 
-    set_tight(fig, rect=[0.0, 0.0, 1, 1])
+	set_tight(fig, rect=[0.0, 0.0, 1, 1])
 
 @plot
 def observables_design():
-    _observables(posterior=False, plot_type='lines')
+	_observables(posterior=False, plot_type='lines')
 
 @plot
 def observables_posterior():
-    _observables(posterior=True, plot_type='violins')
+	_observables(posterior=True, plot_type='violins')
 
+@plot
+def observables_exp():
+	_observables(posterior=False, plot_type='lines', exp_only=True)
 
 @plot
 def observables_map():
-    """
-    Model observables and ratio to experiment at the maximum a posteriori
-    (MAP) estimate.
+	"""
+	Model observables and ratio to experiment at the maximum a posteriori
+	(MAP) estimate.
 
-    """
-    plots = _observables_plots()
+	"""
+	plots = _observables_plots()
 
-    ylim = {
-        'Yields': (2, 1e5),
-        'Flow cumulants': (0, .15),
-        'Mean $p_T$': (0, 1.7),
-        'Mean $p_T$ fluctuations': (0, .045),
-    }
+	ylim = {
+		'Yields': (2, 1e5),
+		'Flow cumulants': (0, .15),
+		'Mean $p_T$': (0, 1.7),
+		'Mean $p_T$ fluctuations': (0, .045),
+	}
 
-    for n, p in enumerate(plots):
-        p['ylim'] = ylim[p['title']]
-        if p['title'] == 'Flow cumulants':
-            move_index = n
-            p.update(
-                ylabel=r'$v_n\{k\}$',
-                subplots=[
-                    ('vnk', nk, dict(label='$v_{}\{{{}\}}$'.format(*nk)))
-                    for nk in [(2, 2), (2, 4), (3, 2), (4, 2)]
-                ],
-                legend=True
-            )
+	for n, p in enumerate(plots):
+		p['ylim'] = ylim[p['title']]
+		if p['title'] == 'Flow cumulants':
+			move_index = n
+			p.update(
+				ylabel=r'$v_n\{k\}$',
+				subplots=[
+					('vnk', nk, dict(label='$v_{}\{{{}\}}$'.format(*nk)))
+					for nk in [(2, 2), (2, 4), (3, 2), (4, 2)]
+				],
+				legend=True
+			)
 
-    plots.insert(1, plots.pop(move_index))
+	plots.insert(1, plots.pop(move_index))
 
-    ncols = int(len(plots)/2)
+	ncols = int(len(plots)/2)
 
-    fig, axes = plt.subplots(
-        nrows=4, ncols=ncols,
-        figsize=(.8*fullwidth, .4*ncols*fullwidth),
-        gridspec_kw=dict(
-            height_ratios=list(itertools.chain.from_iterable(
-                (p.get('height_ratio', 1), .4) for p in plots[::ncols]
-            ))
-        )
-    )
+	fig, axes = plt.subplots(
+		nrows=4, ncols=ncols,
+		figsize=(.8*fullwidth, .4*ncols*fullwidth),
+		gridspec_kw=dict(
+			height_ratios=list(itertools.chain.from_iterable(
+				(p.get('height_ratio', 1), .4) for p in plots[::ncols]
+			))
+		)
+	)
 
-    labels = {}
-    handles = dict(expt={}, model={})
+	labels = {}
+	handles = dict(expt={}, model={})
 
-    for plot, ax, ratio_ax in zip(plots, axes[::2].flat, axes[1::2].flat):
-        for system, (obs, specie, cen) in itertools.product(
-                systems, plot['subplots']
-        ):
-            color = obs_color(obs, nPDF)
-            scale = opts.get('scale')
+	for plot, ax, ratio_ax in zip(plots, axes[::2].flat, axes[1::2].flat):
+		for system, (obs, specie, cen) in itertools.product(
+				systems, plot['subplots']
+		):
+			color = obs_color(obs, nPDF)
+			scale = opts.get('scale')
 
-            linestyle, fill_markers = {
-                'PbPb2760': ('solid', True),
-                'PbPb5020': ('dashed', False),
-            }[system]
+			linestyle, fill_markers = {
+				'PbPb2760': ('solid', True),
+				'PbPb5020': ('dashed', False),
+			}[system]
 
-            x = model.map_data[system][obs][subobs]['x']
-            y = model.map_data[system][obs][subobs]['Y']
+			x = model.map_data[system][obs][subobs]['x']
+			y = model.map_data[system][obs][subobs]['Y']
 
-            ax.plot(x, y, color=color, ls=linestyle)
-            handles['model'][system] = \
-                lines.Line2D([], [], color=offblack, ls=linestyle)
+			ax.plot(x, y, color=color, ls=linestyle)
+			handles['model'][system] = \
+				lines.Line2D([], [], color=offblack, ls=linestyle)
 
-            if 'label' in opts and (obs, subobs) not in labels:
-                labels[obs, subobs] = ax.text(
-                    x[-1] + 3, y[-1],
-                    opts['label'],
-                    color=darken(color), ha='left', va='center'
-                )
+			if 'label' in opts and (obs, subobs) not in labels:
+				labels[obs, subobs] = ax.text(
+					x[-1] + 3, y[-1],
+					opts['label'],
+					color=darken(color), ha='left', va='center'
+				)
 
-            try:
-                dset = expt.data[system][obs][subobs]
-            except KeyError:
-                continue
+			try:
+				dset = expt.data[system][obs][subobs]
+			except KeyError:
+				continue
 
-            x = dset['x']
-            yexp = dset['y']
-            yerr = dset['yerr']
-            yerrstat = yerr.get('stat')
-            yerrsys = yerr.get('sys', yerr.get('sum'))
+			x = dset['x']
+			yexp = dset['y']
+			yerr = dset['yerr']
+			yerrstat = yerr.get('stat')
+			yerrsys = yerr.get('sys', yerr.get('sum'))
 
-            if scale is not None:
-                yexp = yexp*scale
-                if yerrstat is not None:
-                    yerrstat = yerrstat*scale
-                if yerrsys is not None:
-                    yerrsys = yerrsys*scale
+			if scale is not None:
+				yexp = yexp*scale
+				if yerrstat is not None:
+					yerrstat = yerrstat*scale
+				if yerrsys is not None:
+					yerrsys = yerrsys*scale
 
-            handles['expt'][system] = ax.errorbar(
-                x, yexp, yerr=yerrstat, fmt='o', ms=1.7,
-                capsize=0, color=offblack,
-                mfc=(offblack if fill_markers else '.9'),
-                mec=offblack, mew=(0 if fill_markers else .25),
-                zorder=1000
-            )
+			handles['expt'][system] = ax.errorbar(
+				x, yexp, yerr=yerrstat, fmt='o', ms=1.7,
+				capsize=0, color=offblack,
+				mfc=(offblack if fill_markers else '.9'),
+				mec=offblack, mew=(0 if fill_markers else .25),
+				zorder=1000
+			)
 
-            ax.fill_between(
-                x, yexp - yerrsys, yexp + yerrsys,
-                facecolor='.9', zorder=-10,
-            )
+			ax.fill_between(
+				x, yexp - yerrsys, yexp + yerrsys,
+				facecolor='.9', zorder=-10,
+			)
 
-            ratio_ax.plot(x, y/yexp, color=color, ls=linestyle)
-            ax.set_xlim(plot['xlim'])
-            ax.set_ylim(plot['ylim'])
-        if plot.get('yscale') == 'log':
-            ax.set_yscale('log')
-            ax.minorticks_off()
-        else:
-            auto_ticks(ax, 'y', nbins=4, minor=2)
+			ratio_ax.plot(x, y/yexp, color=color, ls=linestyle)
+			ax.set_xlim(plot['xlim'])
+			ax.set_ylim(plot['ylim'])
+		if plot.get('yscale') == 'log':
+			ax.set_yscale('log')
+			ax.minorticks_off()
+		else:
+			auto_ticks(ax, 'y', nbins=4, minor=2)
 
-        for a in [ax, ratio_ax]:
-            auto_ticks(a, 'x', nbins=5, minor=2)
+		for a in [ax, ratio_ax]:
+			auto_ticks(a, 'x', nbins=5, minor=2)
 
-        if ratio_ax.is_last_row():
-            ratio_ax.set_xlabel('Centrality %')
+		if ratio_ax.is_last_row():
+			ratio_ax.set_xlabel('Centrality %')
 
 
-        ax.set_ylabel(plot['ylabel'])
+		ax.set_ylabel(plot['ylabel'])
 
-        if plot.get('legend'):
-            ax.legend(
-                [handles[t][s] for t in ['model', 'expt'] for s in systems],
-                [fmt.format(parse_system(s)[1]/1000)
-                 for fmt in ['', '{} TeV'] for s in systems],
-                ncol=2, loc='upper left', bbox_to_anchor=(0, .94),
-                columnspacing=0, handletextpad=0
-            )
+		if plot.get('legend'):
+			ax.legend(
+				[handles[t][s] for t in ['model', 'expt'] for s in systems],
+				[fmt.format(parse_system(s)[1]/1000)
+				 for fmt in ['', '{} TeV'] for s in systems],
+				ncol=2, loc='upper left', bbox_to_anchor=(0, .94),
+				columnspacing=0, handletextpad=0
+			)
 
-        ax.text(
-            .5, 1 if ax.is_first_row() else .97, plot['title'],
-            transform=ax.transAxes, ha='center', va='top',
-            size=plt.rcParams['axes.labelsize']
-        )
+		ax.text(
+			.5, 1 if ax.is_first_row() else .97, plot['title'],
+			transform=ax.transAxes, ha='center', va='top',
+			size=plt.rcParams['axes.labelsize']
+		)
 
-        ratio_ax.axhline(1, lw=.5, color='0.5', zorder=-100)
-        ratio_ax.axhspan(.9, 1.1, color='0.93', zorder=-200)
-        ratio_ax.set_ylim(.85, 1.15)
-        ratio_ax.set_ylabel('Ratio')
-        ratio_ax.text(
-            ratio_ax.get_xlim()[1], .9, '±10%',
-            color='.6', zorder=-50,
-            ha='right', va='bottom',
-            size=plt.rcParams['xtick.labelsize']
-        )
+		ratio_ax.axhline(1, lw=.5, color='0.5', zorder=-100)
+		ratio_ax.axhspan(.9, 1.1, color='0.93', zorder=-200)
+		ratio_ax.set_ylim(.85, 1.15)
+		ratio_ax.set_ylabel('Ratio')
+		ratio_ax.text(
+			ratio_ax.get_xlim()[1], .9, '±10%',
+			color='.6', zorder=-50,
+			ha='right', va='bottom',
+			size=plt.rcParams['xtick.labelsize']
+		)
 
-    set_tight(fig)
+	set_tight(fig)
 
 
 @plot
 def find_map():
-    """
-    Find the maximum a posteriori (MAP) point and compare emulator predictions
-    to experimental data.
+	"""
+	Find the maximum a posteriori (MAP) point and compare emulator predictions
+	to experimental data.
 
-    """
-    from scipy.optimize import minimize
-    nPDFs = ['EPPS', 'nCTEQ']
-    chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
+	"""
+	from scipy.optimize import minimize
+	nPDFs = ['EPPS', 'nCTEQ']
+	chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
 
-    fixed_params = {
-#        'tau_0': .8,
-        'model_sys_err': .1,
-    }
+	fixed_params = {
+#		'tau_0': .8,
+		'model_sys_err': .1,
+	}
 
-    opt_params = [k for k in chain['EPPS'].keys if k not in fixed_params]
+	opt_params = [k for k in chain['EPPS'].keys if k not in fixed_params]
 
-    def full_x(x):
-        x = dict(zip(opt_params, x), **fixed_params)
-        return [x[k] for k in chain['EPPS'].keys]
+	def full_x(x):
+		x = dict(zip(opt_params, x), **fixed_params)
+		return [x[k] for k in chain['EPPS'].keys]
 
-    res = {nPDF: minimize(
-        lambda x: -chain[nPDF].log_posterior(full_x(x))[0],
-        x0=np.median(chain[nPDF].load(*opt_params, thin=1000), axis=0),
-        tol=1e-8,
-        bounds=[
-            (a + 1e-6*(b - a), b - 1e-6*(b - a))
-            for (a, b), k in zip(chain[nPDF].range, chain[nPDF].keys)
-            if k in opt_params
-        ]
-      ) for nPDF in nPDFs}
+	res = {nPDF: minimize(
+		lambda x: -chain[nPDF].log_posterior(full_x(x))[0],
+		x0=np.median(chain[nPDF].load(*opt_params, thin=1000), axis=0),
+		tol=1e-8,
+		bounds=[
+			(a + 1e-6*(b - a), b - 1e-6*(b - a))
+			for (a, b), k in zip(chain[nPDF].range, chain[nPDF].keys)
+			if k in opt_params
+		]
+	  ) for nPDF in nPDFs}
 
-    logging.info('optimization result:\n%s', res)
+	logging.info('optimization result:\n%s', res)
 
 
-    preds = {nPDF: chain[nPDF]._predict(np.atleast_2d(full_x(res[nPDF].x))) \
-                for nPDF in nPDFs}
+	preds = {nPDF: chain[nPDF]._predict(np.atleast_2d(full_x(res[nPDF].x))) \
+				for nPDF in nPDFs}
 
-    plots = _observables_plots()
+	plots = _observables_plots()
 
-    fig = plt.figure(figsize=(fullwidth, 0.6*fullwidth))
+	fig = plt.figure(figsize=(fullwidth, 0.6*fullwidth))
 
-    gs = GridSpec(4, 3)
-    ax1 = plt.subplot(gs[0, 0])
-    ax2 = plt.subplot(gs[0, 1])
-    ax3 = plt.subplot(gs[0, 2])
-    ax4 = plt.subplot(gs[1, 0])
-    ax5 = plt.subplot(gs[1, 1])
-    ax6 = plt.subplot(gs[1, 2])
-    ax7 = plt.subplot(gs[2, 0])
-    ax8 = plt.subplot(gs[2, 1])
-    ax9 = plt.subplot(gs[2, 2])
-    ax10 = plt.subplot(gs[3, 0])
-    ax11 = plt.subplot(gs[3, 1])
-    ax12 = plt.subplot(gs[3, 2])
-    system = 'PbPb5020'
-    allaxes = [[ax1, ax2, ax3], [ax4, ax5, ax6], [ax7, ax8, ax9], [ax10, ax11], [ax12]]
+	gs = GridSpec(4, 3)
+	ax1 = plt.subplot(gs[0, 0])
+	ax2 = plt.subplot(gs[0, 1])
+	ax3 = plt.subplot(gs[0, 2])
+	ax4 = plt.subplot(gs[1, 0])
+	ax5 = plt.subplot(gs[1, 1])
+	ax6 = plt.subplot(gs[1, 2])
+	ax7 = plt.subplot(gs[2, 0])
+	ax8 = plt.subplot(gs[2, 1])
+	ax9 = plt.subplot(gs[2, 2])
+	ax10 = plt.subplot(gs[3, 0])
+	ax11 = plt.subplot(gs[3, 1])
+	ax12 = plt.subplot(gs[3, 2])
+	system = 'PbPb5020'
+	allaxes = [[ax1, ax2, ax3], [ax4, ax5, ax6], [ax7, ax8, ax9], [ax10, ax11], [ax12]]
 
-    for plot, rowax in zip(plots, allaxes):
-        for (exp, obs, specie, cen, opts), ax in zip(plot['subplots'], rowax):
-            try:
-                dset = expt.data[system][exp][obs][specie][cen]
-                w = [h-l for l, h in dset['pT'] ]
-            except KeyError:
-                continue
+	for plot, rowax in zip(plots, allaxes):
+		for (exp, obs, specie, cen, opts), ax in zip(plot['subplots'], rowax):
+			try:
+				dset = expt.data[system][exp][obs][specie][cen]
+				w = [h-l for l, h in dset['pT'] ]
+			except KeyError:
+				continue
 
-            x = dset['x']
-            yexp = dset['y']
-            yerr = dset['yerr']
-            yerrstat = yerr.get('stat')
-            yerrsys = yerr.get('sys', yerr.get('sum'))
+			x = dset['x']
+			yexp = dset['y']
+			yerr = dset['yerr']
+			yerrstat = yerr.get('stat')
+			yerrsys = yerr.get('sys', yerr.get('sum'))
 
-            
-            #ax.set_title(, fontsize=6)
-            # ratio plot
-            for nPDF in nPDFs:
-                color = obs_color(obs, nPDF)
-                x = model.data[system][nPDF][exp][obs][specie][cen]['x']
-                y = preds[nPDF][system][exp][obs][specie][cen][0]
+			
+			#ax.set_title(, fontsize=6)
+			# ratio plot
+			for nPDF in nPDFs:
+				color = obs_color(obs, nPDF)
+				x = model.data[system][nPDF][exp][obs][specie][cen]['x']
+				y = preds[nPDF][system][exp][obs][specie][cen][0]
 
-                ax.errorbar(
-                    x, yexp/y, yerr=yerrstat/y, fmt='o', ms=1.7,
-                    capsize=0, color=color, zorder=1000
-                )
-                for ix, iw, il, ih, ic in \
-                    zip(x, w, yexp - yerrsys, yexp + yerrsys, y):
-                    ax.fill_between(
-                        [ix-iw/2., ix+iw/2.],
-                        [il/ic, il/ic], [ih/ic, ih/ic],
-                        zorder=-10,
-                        facecolor='white', edgecolor=color
-                    )
-                ax.plot(plot['xlim'], np.ones_like(plot['xlim']), 'k-')
-                ax.fill_between(plot['xlim'], np.ones_like(plot['xlim'])*.7,
-                                np.ones_like(plot['xlim'])*1.3, 
-                                color='grey', alpha=.2, label=r'$\pm$ 30%')
-           
-            if ax.is_last_row():
-                ax.set_xlabel(r'$p_T$ [GeV]')
-            if ax.is_first_col():
-                ax.set_ylabel(plot['ylabel'])
+				ax.errorbar(
+					x, yexp/y, yerr=yerrstat/y, fmt='o', ms=1.7,
+					capsize=0, color=color, zorder=1000
+				)
+				for ix, iw, il, ih, ic in \
+					zip(x, w, yexp - yerrsys, yexp + yerrsys, y):
+					ax.fill_between(
+						[ix-iw/2., ix+iw/2.],
+						[il/ic, il/ic], [ih/ic, ih/ic],
+						zorder=-10,
+						facecolor='white', edgecolor=color
+					)
+				ax.plot(plot['xlim'], np.ones_like(plot['xlim']), 'k-')
+				ax.fill_between(plot['xlim'], np.ones_like(plot['xlim'])*.7,
+								np.ones_like(plot['xlim'])*1.3, 
+								color='grey', alpha=.2, label=r'$\pm$ 30%')
+		   
+			if ax.is_last_row():
+				ax.set_xlabel(r'$p_T$ [GeV]')
+			if ax.is_first_col():
+				ax.set_ylabel(plot['ylabel'])
 
-            ax.annotate(
-            exp+' '+'D'+', '+opts['label'], (.65, .8), xycoords='axes fraction',
-            ha='center', va='bottom', fontsize=6, color='k'
-            )
-            ax.semilogy()
-            ax.set_xlim(plot['xlim'])
-            ax.set_ylim(4e-1,6e0)
-            ax.set_yticks([5e-1,1e0, 5e0])
-            ax.set_yticklabels(["0.5","1", "5"])
-            
-            #ax.minorticks_off()
+			ax.annotate(
+			exp+' '+'D'+', '+opts['label'], (.65, .8), xycoords='axes fraction',
+			ha='center', va='bottom', fontsize=6, color='k'
+			)
+			ax.semilogy()
+			ax.set_xlim(plot['xlim'])
+			ax.set_ylim(4e-1,6e0)
+			ax.set_yticks([5e-1,1e0, 5e0])
+			ax.set_yticklabels(["0.5","1", "5"])
+			
+			#ax.minorticks_off()
 
-    set_tight(fig, rect=[0., 0., .97, 1])
+	set_tight(fig, rect=[0., 0., .97, 1])
 
 
 tk_preds = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in ['EPPS','nCTEQ']}
 def observables_at(params, nPDF, allaxes, system='PbPb5020'):
-    preds = tk_preds[nPDF]._predict(np.atleast_2d([*params, 0.1]))
-    plots = _observables_plots()
-    for plot, rowax in zip(plots, allaxes):
-        for (exp, obs, specie, cen, opts), ax in zip(plot['subplots'], rowax):
-            ax.set_xlim(plot['xlim'])
-            ax.semilogx()
-            ax.set_ylim(plot['ylim'])
-            ax.minorticks_off()
-            ax.clear()
+	preds = tk_preds[nPDF]._predict(np.atleast_2d([*params, 0.1]))
+	plots = _observables_plots()
+	for plot, rowax in zip(plots, allaxes):
+		for (exp, obs, specie, cen, opts), ax in zip(plot['subplots'], rowax):
+			ax.set_xlim(plot['xlim'])
+			ax.semilogx()
+			ax.set_ylim(plot['ylim'])
+			ax.minorticks_off()
+			ax.clear()
 
-            try:
-                dset = expt.data[system][exp][obs][specie][cen]
-                w = [h-l for l, h in dset['pT'] ]
-            except KeyError:
-                continue
+			try:
+				dset = expt.data[system][exp][obs][specie][cen]
+				w = [h-l for l, h in dset['pT'] ]
+			except KeyError:
+				continue
 
-            x = dset['x']
-            yexp = dset['y']
-            yerr = dset['yerr']
-            yerrstat = yerr.get('stat')
-            yerrsys = yerr.get('sys', yerr.get('sum'))
+			x = dset['x']
+			yexp = dset['y']
+			yerr = dset['yerr']
+			yerrstat = yerr.get('stat')
+			yerrsys = yerr.get('sys', yerr.get('sum'))
 
-            
-            ax.set_title(exp+' '+specie+', '+opts['label'], fontsize=6)
+			
+			ax.set_title(exp+' '+specie+', '+opts['label'], fontsize=6)
 
-            color = obs_color(obs, nPDF)
-            x = model.data[system][nPDF][exp][obs][specie][cen]['x']
-            y = preds[system][exp][obs][specie][cen][0]
+			color = obs_color(obs, nPDF)
+			x = model.data[system][nPDF][exp][obs][specie][cen]['x']
+			y = preds[system][exp][obs][specie][cen][0]
 
-            ax.errorbar(
-                x, yexp, yerr=yerrstat, fmt='o', ms=1.7,
-                capsize=0, color=color, zorder=1000
-            )
-            ax.errorbar(
-                x, y, yerr=0., fmt='-', ms=1.7,
-                capsize=0, color=color, zorder=1000
-            )
-           
-            if ax.is_last_row():
-                ax.set_xlabel(r'$p_T$ [GeV]')
+			ax.errorbar(
+				x, yexp, yerr=yerrstat, fmt='o', ms=1.7,
+				capsize=0, color=color, zorder=1000
+			)
+			ax.errorbar(
+				x, y, yerr=0., fmt='-', ms=1.7,
+				capsize=0, color=color, zorder=1000
+			)
+		   
+			if ax.is_last_row():
+				ax.set_xlabel(r'$p_T$ [GeV]')
 
-            if ax.is_first_col():
-                ax.set_ylabel(plot['ylabel'])
-            if ax.is_first_col():
-                ax.set_ylabel(plot['ylabel'])
+			if ax.is_first_col():
+				ax.set_ylabel(plot['ylabel'])
+			if ax.is_first_col():
+				ax.set_ylabel(plot['ylabel'])
 
-            if ax.is_last_col():
-                ax.text(
-                    1.02, .5, plot['title'],
-                    transform=ax.transAxes, ha='left', va='center',
-                    size=plt.rcParams['axes.labelsize'], rotation=-90
-                )
+			if ax.is_last_col():
+				ax.text(
+					1.02, .5, plot['title'],
+					transform=ax.transAxes, ha='left', va='center',
+					size=plt.rcParams['axes.labelsize'], rotation=-90
+				)
 
 
 def format_ci(samples, ci=.9):
-    """
-    Compute the median and a credible interval for an array of samples and
-    return a TeX-formatted string.
+	"""
+	Compute the median and a credible interval for an array of samples and
+	return a TeX-formatted string.
 
-    """
-    cil, cih = mcmc.credible_interval(samples, ci=ci)
-    median = np.median(samples)
-    ul = median - cil
-    uh = cih - median
+	"""
+	cil, cih = mcmc.credible_interval(samples, ci=ci)
+	median = np.median(samples)
+	ul = median - cil
+	uh = cih - median
 
-    # decide precision for formatting numbers
-    # this is NOT general but it works for the present data
-    if abs(median) < .2 and ul < .02:
-        precision = 3
-    elif abs(median) < 1:
-        precision = 2
-    else:
-        precision = 1
+	# decide precision for formatting numbers
+	# this is NOT general but it works for the present data
+	if abs(median) < .2 and ul < .02:
+		precision = 3
+	elif abs(median) < 1:
+		precision = 2
+	else:
+		precision = 1
 
-    fmt = str(precision).join(['{:#.', 'f}'])
+	fmt = str(precision).join(['{:#.', 'f}'])
 
-    return ''.join([
-        '$', fmt.format(median),
-        '_{-', fmt.format(ul), '}',
-        '^{+', fmt.format(uh), '}$'
-    ]), {'m': median, 'l': ul, 'h': uh}
+	return ''.join([
+		'$', fmt.format(median),
+		'_{-', fmt.format(ul), '}',
+		'^{+', fmt.format(uh), '}$'
+	]), {'m': median, 'l': ul, 'h': uh}
 
 @plot
 def diag_posterior(
-        params=None, ignore=['model_sys_err'],
-        scale=1, padr=.99, padt=.98,
+		params=None, ignore=['model_sys_err'],
+		scale=1, padr=.99, padt=.98,
 ):
-    nPDFs = ['EPPS', 'nCTEQ']
-    chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
-    if params is None and ignore is None:
-        params = set(chain[nPDFs[0]].keys)
-    elif params is not None:
-        params = set(params)
-    elif ignore is not None:
-        print(set(chain[nPDFs[0]].keys))
-        params = set(chain[nPDFs[0]].keys) - set(ignore)
+	nPDFs = ['EPPS', 'nCTEQ']
+	chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
+	if params is None and ignore is None:
+		params = set(chain[nPDFs[0]].keys)
+	elif params is not None:
+		params = set(params)
+	elif ignore is not None:
+		print(set(chain[nPDFs[0]].keys))
+		params = set(chain[nPDFs[0]].keys) - set(ignore)
 
-    keys, labels, ranges = map(list, zip(*(
-        i for i in zip(chain[nPDFs[0]].keys,
-                       chain[nPDFs[0]].labels, chain[nPDFs[0]].range)
-        if i[0] in params
-    )))
-    print(ranges)
-    ndim = len(params)
+	keys, labels, ranges = map(list, zip(*(
+		i for i in zip(chain[nPDFs[0]].keys,
+					   chain[nPDFs[0]].labels, chain[nPDFs[0]].range)
+		if i[0] in params
+	)))
+	print(ranges)
+	ndim = len(params)
 
-    data = {nPDF: chain[nPDF].load(*keys).T for nPDF in nPDFs}
-    # output some samples
-    for nPDF in nPDFs:
-        indices = np.random.choice(data[nPDF].shape[1], 200)
-        with open(nPDF+"-sample-parameter.txt", 'w') as f:
-            ps = data[nPDF][:, indices]
-            for p in ps.T:
-                print(np.exp(p[1]), '\t', np.exp(p[2])-1., '\t',
-                     np.exp(p[3])-1., file=f)
-    if 'mu' in keys:
-        key = 'mu'
-        #for nPDF in nPDFs:
-        #    data[nPDF][keys.index(key)] = \
-        #                    np.exp(data[nPDF][keys.index(key)])
-        #ranges[keys.index(key)] = np.exp(ranges[keys.index(key)])
-        labels[keys.index(key)] = r'$\ln\mu$'
-    if 'tau_0' in keys:
-        key = 'tau_0'
-        labels[keys.index(key)] = r'$\tau_{\mathrm{HQ}}$ [fm/c]'
-    if 'qhat_A' in keys:
-        key = 'qhat_A'
-        for nPDF in nPDFs:
-            data[nPDF][keys.index(key)] = \
-                            np.exp(data[nPDF][keys.index(key)])-1.
-        ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
-        labels[keys.index(key)] = r'$A$'
-    if 'qhat_B' in keys:
-        key = 'qhat_B'
-        for nPDF in nPDFs:
-            data[nPDF][keys.index(key)] = \
-                            np.exp(data[nPDF][keys.index(key)])-1.
-        ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
-        labels[keys.index(key)] = r'$B$'
-    
-    for nPDF in nPDFs:
-        A = np.copy(data[nPDF][keys.index('qhat_A')])
-        B = np.copy(data[nPDF][keys.index('qhat_B')])
-        data[nPDF][keys.index('qhat_A')] = A+B
-        data[nPDF][keys.index('qhat_B')] = A/(A+B)
-    labels[keys.index('qhat_A')] = r'$\kappa_D$'
-    labels[keys.index('qhat_B')] = r'$x_D$'
-    ranges[keys.index('qhat_B')] = np.array([0,1])
-    ranges[keys.index('qhat_A')] = np.array([0,4])
-    #ranges[keys.index('mu')] = np.array([0.3, 4])
-    ranges[keys.index('tau_0')] = np.array([0., 1])
-    cmap1 = plt.get_cmap('Blues')
-    cmap1.set_bad('white')
-    cmap2 = plt.get_cmap('Greens')
-    cmap2.set_bad('white')
-    cmaps = [cmap1, cmap2]
+	data = {nPDF: chain[nPDF].load(*keys).T for nPDF in nPDFs}
+	# output some samples
+	for nPDF in nPDFs:
+		indices = np.random.choice(data[nPDF].shape[1], 200)
+		with open(nPDF+"-sample-parameter.txt", 'w') as f:
+			ps = data[nPDF][:, indices]
+			for p in ps.T:
+				print(np.exp(p[1]), '\t', np.exp(p[2])-1., '\t',
+					 np.exp(p[3])-1., file=f)
+	if 'mu' in keys:
+		key = 'mu'
+		#for nPDF in nPDFs:
+		#	data[nPDF][keys.index(key)] = \
+		#					np.exp(data[nPDF][keys.index(key)])
+		#ranges[keys.index(key)] = np.exp(ranges[keys.index(key)])
+		labels[keys.index(key)] = r'$\ln\mu$'
+	if 'tau_0' in keys:
+		key = 'tau_0'
+		labels[keys.index(key)] = r'$\tau_{\mathrm{HQ}}$ [fm/c]'
+	if 'qhat_A' in keys:
+		key = 'qhat_A'
+		for nPDF in nPDFs:
+			data[nPDF][keys.index(key)] = \
+							np.exp(data[nPDF][keys.index(key)])-1.
+		ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
+		labels[keys.index(key)] = r'$A$'
+	if 'qhat_B' in keys:
+		key = 'qhat_B'
+		for nPDF in nPDFs:
+			data[nPDF][keys.index(key)] = \
+							np.exp(data[nPDF][keys.index(key)])-1.
+		ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
+		labels[keys.index(key)] = r'$B$'
+	
+	for nPDF in nPDFs:
+		A = np.copy(data[nPDF][keys.index('qhat_A')])
+		B = np.copy(data[nPDF][keys.index('qhat_B')])
+		data[nPDF][keys.index('qhat_A')] = A+B
+		data[nPDF][keys.index('qhat_B')] = A/(A+B)
+	labels[keys.index('qhat_A')] = r'$\kappa_D$'
+	labels[keys.index('qhat_B')] = r'$x_D$'
+	ranges[keys.index('qhat_B')] = np.array([0,1])
+	ranges[keys.index('qhat_A')] = np.array([0,4])
+	#ranges[keys.index('mu')] = np.array([0.3, 4])
+	ranges[keys.index('tau_0')] = np.array([0., 1])
+	cmap1 = plt.get_cmap('Blues')
+	cmap1.set_bad('white')
+	cmap2 = plt.get_cmap('Greens')
+	cmap2.set_bad('white')
+	cmaps = [cmap1, cmap2]
 
-    line_colors = [cmap(.8) for cmap in cmaps]
-    fill_colors = [cmap(.5, alpha=.1) for cmap in cmaps]
+	line_colors = [cmap(.8) for cmap in cmaps]
+	fill_colors = [cmap(.5, alpha=.1) for cmap in cmaps]
 
-    fig, axes = plt.subplots(
-        nrows=2, ncols=2,
-        sharey=True,#sharex='col', 
-        figsize=(0.5*fullheight,0.35*fullheight)
-    )
+	fig, axes = plt.subplots(
+		nrows=2, ncols=2,
+		sharey=True,#sharex='col', 
+		figsize=(0.5*fullheight,0.35*fullheight)
+	)
 
-    sdict1 = {}
-    sdict2 = {}
-    for i, (samples1, samples2, key, lim, ax, lab) in \
-        enumerate(zip(data['EPPS'], data['nCTEQ'], keys, ranges, axes.flatten(), labels)):
-        interps = {}
-        for j, (samples, line_color, fill_color) in \
-            enumerate(zip([samples1, samples2], line_colors, fill_colors)):
-            counts, edges = np.histogram(samples, bins=50, range=lim)
-            x = (edges[1:] + edges[:-1]) / 2
-            y = counts / counts.max()*.75
-            # smooth histogram with monotonic cubic interpolation
-            interp = PchipInterpolator(x, y)
-            interps[j] = interp
-            x = np.linspace(x[0], x[-1], 10*x.size)
-            y = interp(x)
-            ax.plot(x, y, lw=1., color=line_color)
-            ax.fill_between(x, 0*y, y, color=fill_color, zorder=-10)
-        ax.set_xlim(lim)
-        ax.set_ylim(lim)
+	sdict1 = {}
+	sdict2 = {}
+	for i, (samples1, samples2, key, lim, ax, lab) in \
+		enumerate(zip(data['EPPS'], data['nCTEQ'], keys, ranges, axes.flatten(), labels)):
+		interps = {}
+		for j, (samples, line_color, fill_color) in \
+			enumerate(zip([samples1, samples2], line_colors, fill_colors)):
+			counts, edges = np.histogram(samples, bins=50, range=lim)
+			x = (edges[1:] + edges[:-1]) / 2
+			y = counts / counts.max()*.75
+			# smooth histogram with monotonic cubic interpolation
+			interp = PchipInterpolator(x, y)
+			interps[j] = interp
+			x = np.linspace(x[0], x[-1], 10*x.size)
+			y = interp(x)
+			ax.plot(x, y, lw=1., color=line_color)
+			ax.fill_between(x, 0*y, y, color=fill_color, zorder=-10)
+		ax.set_xlim(lim)
+		ax.set_ylim(lim)
 
-        stex1, dict1 = format_ci(samples1)
-        sdict1[i] = dict1
-        stex2, dict2 = format_ci(samples2)
-        sdict2[i] = dict2
-        ax.annotate(
-            'EPPS '+stex1 if i==0 else stex1, (.5, .86) if i==0 else (.7, .86), xycoords='axes fraction',
-            ha='center', va='bottom', fontsize=5, color=line_colors[0]
-        )
-        ax.annotate(
-            'nCTEQ '+stex2 if i==0 else stex2, (.5, .6) if i==0 else (.7, .6), xycoords='axes fraction',
-            ha='center', va='bottom', fontsize=5, color=line_colors[1]
-        )
+		stex1, dict1 = format_ci(samples1)
+		sdict1[i] = dict1
+		stex2, dict2 = format_ci(samples2)
+		sdict2[i] = dict2
+		ax.annotate(
+			'EPPS '+stex1 if i==0 else stex1, (.5, .86) if i==0 else (.7, .86), xycoords='axes fraction',
+			ha='center', va='bottom', fontsize=5, color=line_colors[0]
+		)
+		ax.annotate(
+			'nCTEQ '+stex2 if i==0 else stex2, (.5, .6) if i==0 else (.7, .6), xycoords='axes fraction',
+			ha='center', va='bottom', fontsize=5, color=line_colors[1]
+		)
 
-        if ax.is_first_col():
-            ax.set_ylabel(r'$dP/dx$')
-            ax.set_yticks([])
-        ax.set_xlabel(lab)
-        
+		if ax.is_first_col():
+			ax.set_ylabel(r'$dP/dx$')
+			ax.set_yticks([])
+		ax.set_xlabel(lab)
+		
 
 
 
-    set_tight(fig, pad=.05, h_pad=.1, w_pad=.1, rect=[0., 0., padr, padt])
+	set_tight(fig, pad=.05, h_pad=.1, w_pad=.1, rect=[0., 0., padr, padt])
 
 
 
 def _posterior(
-        params=None, ignore=['model_sys_err'],
-        scale=1, padr=.99, padt=.98,
-        cmap=None, nPDFs=None
+		params=None, ignore=['model_sys_err'],
+		scale=1, padr=.99, padt=.98,
+		cmap=None, nPDFs=None
 ):
-    """
-    Triangle plot of posterior marginal and joint distributions.
+	"""
+	Triangle plot of posterior marginal and joint distributions.
 
-    """
-    chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
-
-
-    if params is None and ignore is None:
-        params = set(chain[nPDFs[0]].keys)
-    elif params is not None:
-        params = set(params)
-    elif ignore is not None:
-        print(set(chain[nPDFs[0]].keys))
-        params = set(chain[nPDFs[0]].keys) - set(ignore)
-
-    keys, labels, ranges = map(list, zip(*(
-        i for i in zip(chain[nPDFs[0]].keys,
-                       chain[nPDFs[0]].labels, chain[nPDFs[0]].range)
-        if i[0] in params
-    )))
-    print(ranges)
-    ndim = len(params)
-
-    data = {nPDF: chain[nPDF].load(*keys).T for nPDF in nPDFs}
-    # output some samples
-    for nPDF in nPDFs:
-        indices = np.random.choice(data[nPDF].shape[1], 200)
-        with open(nPDF+"-sample-parameter.txt", 'w') as f:
-            ps = data[nPDF][:, indices]
-            for p in ps.T:
-                print(np.exp(p[1]), '\t', np.exp(p[2])-1., '\t',
-                     np.exp(p[3])-1., file=f)
-    if 'mu' in keys:
-        key = 'mu'
-        for nPDF in nPDFs:
-            data[nPDF][keys.index(key)] = \
-                            np.exp(data[nPDF][keys.index(key)])
-        ranges[keys.index(key)] = np.exp(ranges[keys.index(key)])
-        labels[keys.index(key)] = r'$\mu$'
-    if 'tau_0' in keys:
-        key = 'tau_0'
-        labels[keys.index(key)] = r'$\tau_0$ [fm/c]'
-    if 'qhat_A' in keys:
-        key = 'qhat_A'
-        for nPDF in nPDFs:
-            data[nPDF][keys.index(key)] = \
-                            np.exp(data[nPDF][keys.index(key)])-1.
-        ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
-        labels[keys.index(key)] = r'$A$'
-    if 'qhat_B' in keys:
-        key = 'qhat_B'
-        for nPDF in nPDFs:
-            data[nPDF][keys.index(key)] = \
-                            np.exp(data[nPDF][keys.index(key)])-1.
-        ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
-        labels[keys.index(key)] = r'$B$'
-    
-    for nPDF in nPDFs:
-        A = np.copy(data[nPDF][keys.index('qhat_A')])
-        B = np.copy(data[nPDF][keys.index('qhat_B')])
-        data[nPDF][keys.index('qhat_A')] = A+B
-        data[nPDF][keys.index('qhat_B')] = A/(A+B)
-    labels[keys.index('qhat_A')] = r'$\kappa_D$'
-    labels[keys.index('qhat_B')] = r'$x_D$'
-    ranges[keys.index('qhat_B')] = np.array([0,1])
-    ranges[keys.index('qhat_A')] = np.array([0,4])
-    ranges[keys.index('mu')] = np.array([0.3, 4])
-    
-    cmap1 = plt.get_cmap('Blues')
-    cmap1.set_bad('white')
-    cmap2 = plt.get_cmap('Greens')
-    cmap2.set_bad('white')
-    cmaps = [cmap1, cmap2]
-
-    line_colors = [cmap(.8) for cmap in cmaps]
-    fill_colors = [cmap(.5, alpha=.1) for cmap in cmaps]
-
-    fig, axes = plt.subplots(
-        nrows=ndim, ncols=ndim,
-        sharex='col', sharey='row',
-        figsize=(fullheight,fullheight)
-    )
-
-    sdict1 = {}
-    sdict2 = {}
-    for i, (samples1, samples2, key, lim, ax) in \
-        enumerate(zip(data['EPPS'], data['nCTEQ'], keys, ranges, axes.diagonal())):
-        interps = {}
-        for j, (samples, line_color, fill_color) in \
-            enumerate(zip([samples1, samples2], line_colors, fill_colors)):
-            counts, edges = np.histogram(samples, bins=50, range=lim)
-            x = (edges[1:] + edges[:-1]) / 2
-            y = .85 * (lim[1] - lim[0]) * counts / counts.max() + lim[0]
-            # smooth histogram with monotonic cubic interpolation
-            interp = PchipInterpolator(x, y)
-            interps[j] = interp
-            x = np.linspace(x[0], x[-1], 10*x.size)
-            y = interp(x)
-            ax.plot(x, y, lw=1., color=line_color)
-            ax.fill_between(x, lim[0], y, color=fill_color, zorder=-10)
-        ax.set_xlim(lim)
-        ax.set_ylim(lim)
-
-        stex1, dict1 = format_ci(samples1)
-        sdict1[i] = dict1
-        stex2, dict2 = format_ci(samples2)
-        sdict2[i] = dict2
-        ax.annotate(
-            stex2, (.5, .86) if i!=3 else(0.5, 0.4), xycoords='axes fraction',
-            ha='center', va='bottom', fontsize=7, color=line_colors[1]
-        )
-        ax.annotate(
-            stex1, (.5, .68) if i!=3 else(0.5, 0.22), xycoords='axes fraction',
-            ha='center', va='bottom', fontsize=7, color=line_colors[0]
-        )
-
-    for ny, nx in zip(*np.tril_indices_from(axes, k=-1)):
-        axes[ny][nx].hist2d(
-            data['EPPS'][nx], data['EPPS'][ny], bins=100,
-            range=(ranges[nx], ranges[ny]),
-            cmap=cmap1, cmin=1
-        )
-        axes[ny][nx].set_xlim(ranges[nx])
-        axes[ny][nx].set_ylim(ranges[ny])
-
-        axes[ny][nx].errorbar(sdict1[nx]['m'], sdict1[ny]['m'],
-                              xerr=[[sdict1[nx]['l']], [sdict1[nx]['h']]],
-                              yerr=[[sdict1[ny]['l']], [sdict1[ny]['h']]],
-                             color=line_colors[0], fmt='D')
-
-        axes[nx][ny].hist2d(
-            data['nCTEQ'][ny], data['nCTEQ'][nx], bins=100,
-            range=(ranges[ny], ranges[nx]),
-            cmap=cmap2, cmin=1
-        )
-        axes[nx][ny].set_xlim(ranges[ny])
-        axes[nx][ny].set_ylim(ranges[nx])
-
-        axes[nx][ny].errorbar(sdict2[ny]['m'], sdict2[nx]['m'],
-                              xerr=[[sdict2[ny]['l']], [sdict2[ny]['h']]],
-                              yerr=[[sdict2[nx]['l']], [sdict2[nx]['h']]],
-                             color=line_colors[1], fmt='D')
+	"""
+	chain = {nPDF: mcmc.Chain(nPDF=nPDF) for nPDF in nPDFs}
 
 
-    for key, label, axb, axl in zip(keys, labels, axes[-1], axes[:, 0]):
-        for axis in [axb.xaxis, axl.yaxis]:
-            axis.set_label_text(label, fontsize=10)
-            axis.set_tick_params(labelsize=6)
-            axis.set_major_locator(ticker.LinearLocator(3))
-            if (
-                    axis.axis_name == 'x'
-                    and scale / ndim < .13
-                    and any(len(str(x)) > 4 for x in axis.get_ticklocs())
-            ):
-                for t in axis.get_ticklabels():
-                    t.set_rotation(30)
+	if params is None and ignore is None:
+		params = set(chain[nPDFs[0]].keys)
+	elif params is not None:
+		params = set(params)
+	elif ignore is not None:
+		print(set(chain[nPDFs[0]].keys))
+		params = set(chain[nPDFs[0]].keys) - set(ignore)
 
-        axb.get_xticklabels()[0].set_horizontalalignment('left')
-        axb.get_xticklabels()[-1].set_horizontalalignment('right')
-        axl.get_yticklabels()[0].set_verticalalignment('bottom')
-        axl.get_yticklabels()[-1].set_verticalalignment('top')
+	keys, labels, ranges = map(list, zip(*(
+		i for i in zip(chain[nPDFs[0]].keys,
+					   chain[nPDFs[0]].labels, chain[nPDFs[0]].range)
+		if i[0] in params
+	)))
+	print(ranges)
+	ndim = len(params)
+
+	data = {nPDF: chain[nPDF].load(*keys).T for nPDF in nPDFs}
+	# output some samples
+	for nPDF in nPDFs:
+		indices = np.random.choice(data[nPDF].shape[1], 200)
+		with open(nPDF+"-sample-parameter.txt", 'w') as f:
+			ps = data[nPDF][:, indices]
+			for p in ps.T:
+				print(np.exp(p[1]), '\t', np.exp(p[2])-1., '\t',
+					 np.exp(p[3])-1., file=f)
+	if 'mu' in keys:
+		key = 'mu'
+		for nPDF in nPDFs:
+			data[nPDF][keys.index(key)] = \
+							np.exp(data[nPDF][keys.index(key)])
+		ranges[keys.index(key)] = np.exp(ranges[keys.index(key)])
+		labels[keys.index(key)] = r'$\mu$'
+	if 'tau_0' in keys:
+		key = 'tau_0'
+		labels[keys.index(key)] = r'$\tau_0$ [fm/c]'
+	if 'qhat_A' in keys:
+		key = 'qhat_A'
+		for nPDF in nPDFs:
+			data[nPDF][keys.index(key)] = \
+							np.exp(data[nPDF][keys.index(key)])-1.
+		ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
+		labels[keys.index(key)] = r'$A$'
+	if 'qhat_B' in keys:
+		key = 'qhat_B'
+		for nPDF in nPDFs:
+			data[nPDF][keys.index(key)] = \
+							np.exp(data[nPDF][keys.index(key)])-1.
+		ranges[keys.index(key)] = np.exp(ranges[keys.index(key)]) - 1.
+		labels[keys.index(key)] = r'$B$'
+	
+	for nPDF in nPDFs:
+		A = np.copy(data[nPDF][keys.index('qhat_A')])
+		B = np.copy(data[nPDF][keys.index('qhat_B')])
+		data[nPDF][keys.index('qhat_A')] = A+B
+		data[nPDF][keys.index('qhat_B')] = A/(A+B)
+	labels[keys.index('qhat_A')] = r'$\kappa_D$'
+	labels[keys.index('qhat_B')] = r'$x_D$'
+	ranges[keys.index('qhat_B')] = np.array([0,1])
+	ranges[keys.index('qhat_A')] = np.array([0,4])
+	ranges[keys.index('mu')] = np.array([0.3, 4])
+	
+	cmap1 = plt.get_cmap('Blues')
+	cmap1.set_bad('white')
+	cmap2 = plt.get_cmap('Greens')
+	cmap2.set_bad('white')
+	cmaps = [cmap1, cmap2]
+
+	line_colors = [cmap(.8) for cmap in cmaps]
+	fill_colors = [cmap(.5, alpha=.1) for cmap in cmaps]
+
+	fig, axes = plt.subplots(
+		nrows=ndim, ncols=ndim,
+		sharex='col', sharey='row',
+		figsize=(fullheight,fullheight)
+	)
+
+	sdict1 = {}
+	sdict2 = {}
+	for i, (samples1, samples2, key, lim, ax) in \
+		enumerate(zip(data['EPPS'], data['nCTEQ'], keys, ranges, axes.diagonal())):
+		interps = {}
+		for j, (samples, line_color, fill_color) in \
+			enumerate(zip([samples1, samples2], line_colors, fill_colors)):
+			counts, edges = np.histogram(samples, bins=50, range=lim)
+			x = (edges[1:] + edges[:-1]) / 2
+			y = .85 * (lim[1] - lim[0]) * counts / counts.max() + lim[0]
+			# smooth histogram with monotonic cubic interpolation
+			interp = PchipInterpolator(x, y)
+			interps[j] = interp
+			x = np.linspace(x[0], x[-1], 10*x.size)
+			y = interp(x)
+			ax.plot(x, y, lw=1., color=line_color)
+			ax.fill_between(x, lim[0], y, color=fill_color, zorder=-10)
+		ax.set_xlim(lim)
+		ax.set_ylim(lim)
+
+		stex1, dict1 = format_ci(samples1)
+		sdict1[i] = dict1
+		stex2, dict2 = format_ci(samples2)
+		sdict2[i] = dict2
+		ax.annotate(
+			stex2, (.5, .86) if i!=3 else(0.5, 0.4), xycoords='axes fraction',
+			ha='center', va='bottom', fontsize=7, color=line_colors[1]
+		)
+		ax.annotate(
+			stex1, (.5, .68) if i!=3 else(0.5, 0.22), xycoords='axes fraction',
+			ha='center', va='bottom', fontsize=7, color=line_colors[0]
+		)
+
+	for ny, nx in zip(*np.tril_indices_from(axes, k=-1)):
+		axes[ny][nx].hist2d(
+			data['EPPS'][nx], data['EPPS'][ny], bins=100,
+			range=(ranges[nx], ranges[ny]),
+			cmap=cmap1, cmin=1
+		)
+		axes[ny][nx].set_xlim(ranges[nx])
+		axes[ny][nx].set_ylim(ranges[ny])
+
+		axes[ny][nx].errorbar(sdict1[nx]['m'], sdict1[ny]['m'],
+							  xerr=[[sdict1[nx]['l']], [sdict1[nx]['h']]],
+							  yerr=[[sdict1[ny]['l']], [sdict1[ny]['h']]],
+							 color=line_colors[0], fmt='D')
+
+		axes[nx][ny].hist2d(
+			data['nCTEQ'][ny], data['nCTEQ'][nx], bins=100,
+			range=(ranges[ny], ranges[nx]),
+			cmap=cmap2, cmin=1
+		)
+		axes[nx][ny].set_xlim(ranges[ny])
+		axes[nx][ny].set_ylim(ranges[nx])
+
+		axes[nx][ny].errorbar(sdict2[ny]['m'], sdict2[nx]['m'],
+							  xerr=[[sdict2[ny]['l']], [sdict2[ny]['h']]],
+							  yerr=[[sdict2[nx]['l']], [sdict2[nx]['h']]],
+							 color=line_colors[1], fmt='D')
 
 
-    set_tight(fig, pad=.05, h_pad=.1, w_pad=.1, rect=[0., 0., padr, padt])
+	for key, label, axb, axl in zip(keys, labels, axes[-1], axes[:, 0]):
+		for axis in [axb.xaxis, axl.yaxis]:
+			axis.set_label_text(label, fontsize=10)
+			axis.set_tick_params(labelsize=6)
+			axis.set_major_locator(ticker.LinearLocator(3))
+			if (
+					axis.axis_name == 'x'
+					and scale / ndim < .13
+					and any(len(str(x)) > 4 for x in axis.get_ticklocs())
+			):
+				for t in axis.get_ticklabels():
+					t.set_rotation(30)
+
+		axb.get_xticklabels()[0].set_horizontalalignment('left')
+		axb.get_xticklabels()[-1].set_horizontalalignment('right')
+		axl.get_yticklabels()[0].set_verticalalignment('bottom')
+		axl.get_yticklabels()[-1].set_verticalalignment('top')
+
+
+	set_tight(fig, pad=.05, h_pad=.1, w_pad=.1, rect=[0., 0., padr, padt])
 
 
 @plot
 def posterior():
-    _posterior(scale=1.6, padr=1., padt=.99, nPDFs=['EPPS', 'nCTEQ'])
+	_posterior(scale=1.6, padr=1., padt=.99, nPDFs=['EPPS', 'nCTEQ'])
 
 
 region_style = dict(color='.93', zorder=-100)
@@ -2039,479 +2229,479 @@ Tc = .154
 
 @plot
 def design():
-    """
-    Projection of a LH design into two dimensions.
+	"""
+	Projection of a LH design into two dimensions.
 
-    """
-    fig = plt.figure(figsize=(.5*textwidth, .5*textwidth))
-    ratio = 10
-    gs = plt.GridSpec(ratio + 1, ratio + 1)
+	"""
+	fig = plt.figure(figsize=(.5*textwidth, .5*textwidth))
+	ratio = 10
+	gs = plt.GridSpec(ratio + 1, ratio + 1)
 
-    ax_j = fig.add_subplot(gs[1:, :-1])
-    ax_x = fig.add_subplot(gs[0, :-1], sharex=ax_j)
-    ax_y = fig.add_subplot(gs[1:, -1], sharey=ax_j)
+	ax_j = fig.add_subplot(gs[1:, :-1])
+	ax_x = fig.add_subplot(gs[0, :-1], sharex=ax_j)
+	ax_y = fig.add_subplot(gs[1:, -1], sharey=ax_j)
 
-    d = Design(systems[0])
+	d = Design(systems[0])
 
-    print((d.array[:,0]>.5) & (np.exp(d.array[:,1])<1.0) & 
-            (np.exp(d.array[:,2])-1. < 1) & (np.exp(d.array[:,3])-1. < 1) )
+	print((d.array[:,0]>.5) & (np.exp(d.array[:,1])<1.0) & 
+			(np.exp(d.array[:,2])-1. < 1) & (np.exp(d.array[:,3])-1. < 1) )
 
-    keys = ('mu', 'qhat_A')
-    indices = tuple(d.keys.index(k) for k in keys)
+	keys = ('mu', 'qhat_A')
+	indices = tuple(d.keys.index(k) for k in keys)
 
-    x, y = (d.array[:, i] for i in indices)
-    ax_j.plot(x, y, 'o', color=plt.cm.Blues(0.75), mec='white', mew=.3)
+	x, y = (d.array[:, i] for i in indices)
+	ax_j.plot(x, y, 'o', color=plt.cm.Blues(0.75), mec='white', mew=.3)
 
-    hist_kw = dict(bins=30, color=plt.cm.Blues(0.4), edgecolor='white', lw=.5)
-    ax_x.hist(x, **hist_kw)
-    ax_y.hist(y, orientation='horizontal', **hist_kw)
+	hist_kw = dict(bins=30, color=plt.cm.Blues(0.4), edgecolor='white', lw=.5)
+	ax_x.hist(x, **hist_kw)
+	ax_y.hist(y, orientation='horizontal', **hist_kw)
 
-    for ax in fig.axes:
-        ax.tick_params(top='off', right='off')
-        spines = ['top', 'right']
-        if ax is ax_x:
-            spines += ['left']
-        elif ax is ax_y:
-            spines += ['bottom']
-        for spine in spines:
-            ax.spines[spine].set_visible(False)
-        for ax_name in 'xaxis', 'yaxis':
-            getattr(ax, ax_name).set_ticks_position('none')
+	for ax in fig.axes:
+		ax.tick_params(top='off', right='off')
+		spines = ['top', 'right']
+		if ax is ax_x:
+			spines += ['left']
+		elif ax is ax_y:
+			spines += ['bottom']
+		for spine in spines:
+			ax.spines[spine].set_visible(False)
+		for ax_name in 'xaxis', 'yaxis':
+			getattr(ax, ax_name).set_ticks_position('none')
 
-    auto_ticks(ax_j)
+	auto_ticks(ax_j)
 
-    for ax in ax_x, ax_y:
-        ax.tick_params(labelbottom='off', labelleft='off')
+	for ax in ax_x, ax_y:
+		ax.tick_params(labelbottom='off', labelleft='off')
 
-    for i, xy in zip(indices, 'xy'):
-        for f, l in [('lim', d.range), ('label', d.labels)]:
-            attr = 'set_{}{}'.format(xy, f)
-            arg = l[i]
-            print(attr, l, l[i])
-            getattr(ax_j, attr)(arg)
+	for i, xy in zip(indices, 'xy'):
+		for f, l in [('lim', d.range), ('label', d.labels)]:
+			attr = 'set_{}{}'.format(xy, f)
+			arg = l[i]
+			print(attr, l, l[i])
+			getattr(ax_j, attr)(arg)
 
 
 @plot
 def gp():
-    """
-    Conditioning a Gaussian process.
+	"""
+	Conditioning a Gaussian process.
 
-    """
-    fig, axes = plt.subplots(
-        figsize=(.47*textwidth, .9*textheight),
-        nrows=2, sharex='col'
-    )
+	"""
+	fig, axes = plt.subplots(
+		figsize=(.47*textwidth, .9*textheight),
+		nrows=2, sharex='col'
+	)
 
-    def dummy_optimizer(obj_func, initial_theta, bounds):
-        return initial_theta, 0.
+	def dummy_optimizer(obj_func, initial_theta, bounds):
+		return initial_theta, 0.
 
-    gp = GPR(1.*kernels.RBF(.8), optimizer=dummy_optimizer)
+	gp = GPR(1.*kernels.RBF(.8), optimizer=dummy_optimizer)
 
-    def sample_y(*args, **kwargs):
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning)
-            return gp.sample_y(*args, **kwargs)
+	def sample_y(*args, **kwargs):
+		with warnings.catch_warnings():
+			warnings.simplefilter('ignore', RuntimeWarning)
+			return gp.sample_y(*args, **kwargs)
 
-    x = np.linspace(0, 5, 1000)
-    X = x[:, np.newaxis]
+	x = np.linspace(0, 5, 1000)
+	X = x[:, np.newaxis]
 
-    x_train = np.linspace(.5, 4.5, 4)
-    X_train = x_train[:, np.newaxis]
+	x_train = np.linspace(.5, 4.5, 4)
+	X_train = x_train[:, np.newaxis]
 
-    for title, ax in zip(['Random functions', 'Conditioned on data'], axes):
-        if title.startswith('Conditioned'):
-            y = sample_y(X_train, random_state=23158).squeeze()
-            y -= .5*(y.max() + y.min())
-            gp.fit(X_train, y)
-            training_data, = plt.plot(x_train, y, 'o', color='.3', zorder=50)
+	for title, ax in zip(['Random functions', 'Conditioned on data'], axes):
+		if title.startswith('Conditioned'):
+			y = sample_y(X_train, random_state=23158).squeeze()
+			y -= .5*(y.max() + y.min())
+			gp.fit(X_train, y)
+			training_data, = plt.plot(x_train, y, 'o', color='.3', zorder=50)
 
-        for s, c in zip(
-                sample_y(X, n_samples=4, random_state=34576).T,
-                ['Blues', 'Greens', 'Oranges', 'Purples']
-        ):
-            ax.plot(x, s, color=getattr(plt.cm, c)(.6))
+		for s, c in zip(
+				sample_y(X, n_samples=4, random_state=34576).T,
+				['Blues', 'Greens', 'Oranges', 'Purples']
+		):
+			ax.plot(x, s, color=getattr(plt.cm, c)(.6))
 
-        mean, std = gp.predict(X, return_std=True)
-        std = ax.fill_between(x, mean - std, mean + std, color='.92')
-        mean, = ax.plot(x, mean, color='.42', dashes=(3.5, 1.5))
+		mean, std = gp.predict(X, return_std=True)
+		std = ax.fill_between(x, mean - std, mean + std, color='.92')
+		mean, = ax.plot(x, mean, color='.42', dashes=(3.5, 1.5))
 
-        ax.set_ylim(-2, 2)
-        ax.set_ylabel('Output')
-        auto_ticks(ax)
+		ax.set_ylim(-2, 2)
+		ax.set_ylabel('Output')
+		auto_ticks(ax)
 
-        ax.set_title(title, y=.9)
+		ax.set_title(title, y=.9)
 
-    ax.set_xlabel('Input')
-    ax.legend(*zip(*[
-        (mean, 'Mean prediction'),
-        (std, 'Uncertainty'),
-        (training_data, 'Training data'),
-    ]), loc='lower left')
-    set_tight(fig, h_pad=1)
+	ax.set_xlabel('Input')
+	ax.legend(*zip(*[
+		(mean, 'Mean prediction'),
+		(std, 'Uncertainty'),
+		(training_data, 'Training data'),
+	]), loc='lower left')
+	set_tight(fig, h_pad=1)
 
 
 @plot
 def pca():
-    fig = plt.figure(figsize=(.45*textwidth, .45*textwidth))
-    ratio = 5
-    gs = plt.GridSpec(ratio + 1, ratio + 1)
+	fig = plt.figure(figsize=(.45*textwidth, .45*textwidth))
+	ratio = 5
+	gs = plt.GridSpec(ratio + 1, ratio + 1)
 
-    ax_j = fig.add_subplot(gs[1:, :-1])
-    ax_x = fig.add_subplot(gs[0, :-1], sharex=ax_j)
-    ax_y = fig.add_subplot(gs[1:, -1], sharey=ax_j)
+	ax_j = fig.add_subplot(gs[1:, :-1])
+	ax_x = fig.add_subplot(gs[0, :-1], sharex=ax_j)
+	ax_y = fig.add_subplot(gs[1:, -1], sharey=ax_j)
 
-    x, y = (
-        model.data['PbPb5020']['EPPS'][exp][obs][specie][cent]['Y'][:, index]
-        for exp, obs, specie, cent, index in [('CMS', 'RAA', 'D0', '0-10', 5),
-                                          ('ALICE','V2', 'D-avg', '30-50', 2)]
-    )
-    x = np.log(x)
-    xlabel = r'$R_{AA}, 0-10\%, 8 < p_T < 10$ [GeV]'
-    ylabel = r'$v_2\{2\}, 30-50\%, 2 < p_T < 3$ [GeV]'
-    xlim = -4, 0
-    ylim = 0.05, 0.3
+	x, y = (
+		model.data['PbPb5020']['EPPS'][exp][obs][specie][cent]['Y'][:, index]
+		for exp, obs, specie, cent, index in [('CMS', 'RAA', 'D0', '0-10', 5),
+										  ('ALICE','V2', 'D-avg', '30-50', 2)]
+	)
+	x = np.log(x)
+	xlabel = r'$R_{AA}, 0-10\%, 8 < p_T < 10$ [GeV]'
+	ylabel = r'$v_2\{2\}, 30-50\%, 2 < p_T < 3$ [GeV]'
+	xlim = -4, 0
+	ylim = 0.05, 0.3
 
-    cmap = plt.cm.Blues
+	cmap = plt.cm.Blues
 
-    ax_j.plot(x, y, 'o', color=cmap(.75), mec='white', mew=.25, zorder=10)
+	ax_j.plot(x, y, 'o', color=cmap(.75), mec='white', mew=.25, zorder=10)
 
-    for d, ax, orientation in [(x, ax_x, 'vertical'), (y, ax_y, 'horizontal')]:
-        ax.hist(
-            d, bins=10,
-            orientation=orientation, color=cmap(.4), edgecolor='white'
-        )
+	for d, ax, orientation in [(x, ax_x, 'vertical'), (y, ax_y, 'horizontal')]:
+		ax.hist(
+			d, bins=10,
+			orientation=orientation, color=cmap(.4), edgecolor='white'
+		)
 
-    xy = np.column_stack([x, y])
-    xymean = xy.mean(axis=0)
-    xystd = xy.std(axis=0)
-    xy -= xymean
-    xy /= xystd
-    pca = PCA().fit(xy)
-    pc = (
-        7 * xystd *
-        pca.explained_variance_ratio_[:, np.newaxis] *
-        pca.components_
-    )
+	xy = np.column_stack([x, y])
+	xymean = xy.mean(axis=0)
+	xystd = xy.std(axis=0)
+	xy -= xymean
+	xy /= xystd
+	pca = PCA().fit(xy)
+	pc = (
+		7 * xystd *
+		pca.explained_variance_ratio_[:, np.newaxis] *
+		pca.components_
+	)
 
-    for w, p in zip(pca.explained_variance_ratio_, pc):
-        print(w)
-        if np.all(p < 0):
-            p *= -1
-        p = p/(p**2).sum()**0.25*0.8
-        print(p)
-        ax_j.annotate(
-            '', xymean + p, xymean, zorder=20,
-            arrowprops=dict(
-                arrowstyle='->', shrinkA=0, shrinkB=0,
-                color=offblack, lw=.7
-            )
-        )
-        ax_j.text(
-            *(xymean + p + (.1, .002)*np.sign(p)), s='{:.0f}%'.format(100*w),
-            color=offblack, ha='center', va='top' if p[1] < 0 else 'bottom',
-            zorder=20
-        )
+	for w, p in zip(pca.explained_variance_ratio_, pc):
+		print(w)
+		if np.all(p < 0):
+			p *= -1
+		p = p/(p**2).sum()**0.25*0.8
+		print(p)
+		ax_j.annotate(
+			'', xymean + p, xymean, zorder=20,
+			arrowprops=dict(
+				arrowstyle='->', shrinkA=0, shrinkB=0,
+				color=offblack, lw=.7
+			)
+		)
+		ax_j.text(
+			*(xymean + p + (.1, .002)*np.sign(p)), s='{:.0f}%'.format(100*w),
+			color=offblack, ha='center', va='top' if p[1] < 0 else 'bottom',
+			zorder=20
+		)
 
-    for ax in fig.axes:
-        ax.tick_params(top='off', right='off')
-        spines = ['top', 'right']
-        if ax is ax_x:
-            spines += ['left']
-        elif ax is ax_y:
-            spines += ['bottom']
-        for spine in spines:
-            ax.spines[spine].set_visible(False)
-        for ax_name in 'xaxis', 'yaxis':
-            getattr(ax, ax_name).set_ticks_position('none')
+	for ax in fig.axes:
+		ax.tick_params(top='off', right='off')
+		spines = ['top', 'right']
+		if ax is ax_x:
+			spines += ['left']
+		elif ax is ax_y:
+			spines += ['bottom']
+		for spine in spines:
+			ax.spines[spine].set_visible(False)
+		for ax_name in 'xaxis', 'yaxis':
+			getattr(ax, ax_name).set_ticks_position('none')
 
-    for ax in ax_x, ax_y:
-        ax.tick_params(labelbottom='off', labelleft='off')
+	for ax in ax_x, ax_y:
+		ax.tick_params(labelbottom='off', labelleft='off')
 
-    auto_ticks(ax_j)
+	auto_ticks(ax_j)
 
-    ax_j.set_xlim(xlim)
-    ax_j.set_ylim(ylim)
+	ax_j.set_xlim(xlim)
+	ax_j.set_ylim(ylim)
 
-    ax_j.set_xlabel(xlabel)
-    ax_j.set_ylabel(ylabel)
+	ax_j.set_xlabel(xlabel)
+	ax_j.set_ylabel(ylabel)
 
-    set_tight(pad=.1, h_pad=.3, w_pad=.3)
+	set_tight(pad=.1, h_pad=.3, w_pad=.3)
 
 
 @plot
 def trento_events():
-    """
-    Random trento events.
+	"""
+	Random trento events.
 
-    """
-    fig, axes = plt.subplots(
-        nrows=3, sharex='col',
-        figsize=(.28*textwidth, .85*textheight)
-    )
+	"""
+	fig, axes = plt.subplots(
+		nrows=3, sharex='col',
+		figsize=(.28*textwidth, .85*textheight)
+	)
 
-    xymax = 8.
-    xyr = [-xymax, xymax]
+	xymax = 8.
+	xyr = [-xymax, xymax]
 
-    with tempfile.NamedTemporaryFile(suffix='.hdf') as t:
-        subprocess.run((
-            'trento Pb Pb {} --quiet --b-max 12 '
-            '--grid-max {} --grid-step .1 '
-            '--random-seed 6347321 --output {}'
-        ).format(axes.size, xymax, t.name).split())
+	with tempfile.NamedTemporaryFile(suffix='.hdf') as t:
+		subprocess.run((
+			'trento Pb Pb {} --quiet --b-max 12 '
+			'--grid-max {} --grid-step .1 '
+			'--random-seed 6347321 --output {}'
+		).format(axes.size, xymax, t.name).split())
 
-        with h5py.File(t.name, 'r') as f:
-            for dset, ax in zip(f.values(), axes):
-                ax.pcolorfast(xyr, xyr, np.array(dset['matter_density']), cmap=plt.cm.Blues)
-                ax.set_aspect('equal')
-                for xy in ['x', 'y']:
-                    getattr(ax, 'set_{}ticks'.format(xy))([-5, 0, 5])
+		with h5py.File(t.name, 'r') as f:
+			for dset, ax in zip(f.values(), axes):
+				ax.pcolorfast(xyr, xyr, np.array(dset['matter_density']), cmap=plt.cm.Blues)
+				ax.set_aspect('equal')
+				for xy in ['x', 'y']:
+					getattr(ax, 'set_{}ticks'.format(xy))([-5, 0, 5])
 
-    axes[-1].set_xlabel('$x$ [fm]')
-    axes[1].set_ylabel('$y$ [fm]')
+	axes[-1].set_xlabel('$x$ [fm]')
+	axes[1].set_ylabel('$y$ [fm]')
 
-    set_tight(fig, h_pad=.5)
+	set_tight(fig, h_pad=.5)
 
 
 def boxplot(
-        ax, percentiles, x=0, y=0, box_width=1, line_width=1,
-        color=(0, 0, 0), alpha=.6, zorder=10
+		ax, percentiles, x=0, y=0, box_width=1, line_width=1,
+		color=(0, 0, 0), alpha=.6, zorder=10
 ):
-    """
-    Draw a minimal boxplot.
+	"""
+	Draw a minimal boxplot.
 
-    `percentiles` must be a np.array of five numbers:
+	`percentiles` must be a np.array of five numbers:
 
-        whisker_low, quartile_1, median, quartile_3, whisker_high
+		whisker_low, quartile_1, median, quartile_3, whisker_high
 
-    """
-    pl, q1, q2, q3, ph = percentiles + y
+	"""
+	pl, q1, q2, q3, ph = percentiles + y
 
-    # IQR box
-    ax.add_patch(patches.Rectangle(
-        xy=(x - .5*box_width, q1),
-        width=box_width, height=(q3 - q1),
-        color=color, alpha=alpha, lw=0, zorder=zorder
-    ))
+	# IQR box
+	ax.add_patch(patches.Rectangle(
+		xy=(x - .5*box_width, q1),
+		width=box_width, height=(q3 - q1),
+		color=color, alpha=alpha, lw=0, zorder=zorder
+	))
 
-    # median line
-    ax.plot(
-        [x - .5*box_width, x + .5*box_width], 2*[q2],
-        lw=line_width, solid_capstyle='butt', color=color,
-        zorder=zorder + 1
-    )
+	# median line
+	ax.plot(
+		[x - .5*box_width, x + .5*box_width], 2*[q2],
+		lw=line_width, solid_capstyle='butt', color=color,
+		zorder=zorder + 1
+	)
 
-    # whisker lines
-    for y in [[q1, pl], [q3, ph]]:
-        ax.plot(
-            2*[x], y, lw=line_width, solid_capstyle='butt',
-            color=color, alpha=alpha, zorder=zorder
-        )
+	# whisker lines
+	for y in [[q1, pl], [q3, ph]]:
+		ax.plot(
+			2*[x], y, lw=line_width, solid_capstyle='butt',
+			color=color, alpha=alpha, zorder=zorder
+		)
 
 
 @plot
 def validation_all(system='PbPb2760'):
-    """
-    Emulator validation: normalized residuals and RMS error for each
-    observable.
+	"""
+	Emulator validation: normalized residuals and RMS error for each
+	observable.
 
-    """
-    fig, (ax_box, ax_rms) = plt.subplots(
-        nrows=2, figsize=(10, 4),
-        gridspec_kw=dict(height_ratios=[1.5, 1])
-    )
+	"""
+	fig, (ax_box, ax_rms) = plt.subplots(
+		nrows=2, figsize=(10, 4),
+		gridspec_kw=dict(height_ratios=[1.5, 1])
+	)
 
-    index = 1
-    ticks = []
-    ticklabels = []
+	index = 1
+	ticks = []
+	ticklabels = []
 
-    vdata = model.validation_data[system]
-    emu = emulators[system]
-    mean, cov = emu.predict(
-        Design(system, validation=True).array,
-        return_cov=True
-    )
+	vdata = model.validation_data[system]
+	emu = emulators[system]
+	mean, cov = emu.predict(
+		Design(system, validation=True).array,
+		return_cov=True
+	)
 
-    def label(obs, subobs):
-        if obs.startswith('d') and obs.endswith('_deta'):
-            return r'$d{}/d\eta$'.format(
-                {'Nch': r'N_\mathrm{ch}', 'ET': r'E_T'}[obs[1:-5]])
+	def label(obs, subobs):
+		if obs.startswith('d') and obs.endswith('_deta'):
+			return r'$d{}/d\eta$'.format(
+				{'Nch': r'N_\mathrm{ch}', 'ET': r'E_T'}[obs[1:-5]])
 
-        id_parts_labels = {'dN_dy': 'dN/dy', 'mean_pT': r'\langle p_T \rangle'}
-        if obs in id_parts_labels:
-            return '${}\ {}$'.format(
-                id_parts_labels[obs],
-                {'pion': '\pi', 'kaon': 'K', 'proton': 'p'}[subobs]
-            )
+		id_parts_labels = {'dN_dy': 'dN/dy', 'mean_pT': r'\langle p_T \rangle'}
+		if obs in id_parts_labels:
+			return '${}\ {}$'.format(
+				id_parts_labels[obs],
+				{'pion': '\pi', 'kaon': 'K', 'proton': 'p'}[subobs]
+			)
 
-        if obs == 'pT_fluct':
-            return r'$\delta p_T/\langle p_T \rangle$'
+		if obs == 'pT_fluct':
+			return r'$\delta p_T/\langle p_T \rangle$'
 
-        if obs == 'vnk':
-            return r'$v_{}\{{{}\}}$'.format(*subobs)
+		if obs == 'vnk':
+			return r'$v_{}\{{{}\}}$'.format(*subobs)
 
-    for obs, subobslist in emu.observables:
-        for subobs in subobslist:
-            color = obs_color(obs, subobs)
+	for obs, subobslist in emu.observables:
+		for subobs in subobslist:
+			color = obs_color(obs, subobs)
 
-            Y = vdata[obs][subobs]['Y']
-            Y_ = mean[obs][subobs]
-            S_ = np.sqrt(cov[(obs, subobs), (obs, subobs)].T.diagonal())
+			Y = vdata[obs][subobs]['Y']
+			Y_ = mean[obs][subobs]
+			S_ = np.sqrt(cov[(obs, subobs), (obs, subobs)].T.diagonal())
 
-            Z = (Y_ - Y)/S_
+			Z = (Y_ - Y)/S_
 
-            for i, percentiles in enumerate(
-                    np.percentile(Z, [10, 25, 50, 75, 90], axis=0).T,
-                    start=index
-            ):
-                boxplot(ax_box, percentiles, x=i, box_width=.75, color=color)
+			for i, percentiles in enumerate(
+					np.percentile(Z, [10, 25, 50, 75, 90], axis=0).T,
+					start=index
+			):
+				boxplot(ax_box, percentiles, x=i, box_width=.75, color=color)
 
-            rms = 100*np.sqrt(np.square(Y_/Y - 1).mean(axis=0))
-            ax_rms.plot(
-                np.arange(index, index + rms.size), rms, 'o', color=color
-            )
+			rms = 100*np.sqrt(np.square(Y_/Y - 1).mean(axis=0))
+			ax_rms.plot(
+				np.arange(index, index + rms.size), rms, 'o', color=color
+			)
 
-            ticks.append(.5*(index + i))
-            ticklabels.append(label(obs, subobs))
+			ticks.append(.5*(index + i))
+			ticklabels.append(label(obs, subobs))
 
-            index = i + 2
+			index = i + 2
 
-    ax_box.set_xticks(ticks)
-    ax_box.set_xticklabels(ticklabels)
-    ax_box.tick_params('x', bottom=False, labelsize=plt.rcParams['font.size'])
+	ax_box.set_xticks(ticks)
+	ax_box.set_xticklabels(ticklabels)
+	ax_box.tick_params('x', bottom=False, labelsize=plt.rcParams['font.size'])
 
-    ax_box.set_ylim(-2.5, 2.5)
-    ax_box.set_ylabel(r'Normalized residuals')
+	ax_box.set_ylim(-2.5, 2.5)
+	ax_box.set_ylabel(r'Normalized residuals')
 
-    q, p = np.sqrt(2) * special.erfinv(2*np.array([.75, .90]) - 1)
-    ax_box.axhspan(-q, q, color='.85', zorder=-20)
-    for s in [-1, 0, 1]:
-        ax_box.axhline(s*p, color='.5', zorder=-10)
+	q, p = np.sqrt(2) * special.erfinv(2*np.array([.75, .90]) - 1)
+	ax_box.axhspan(-q, q, color='.85', zorder=-20)
+	for s in [-1, 0, 1]:
+		ax_box.axhline(s*p, color='.5', zorder=-10)
 
-    ax_q = ax_box.twinx()
-    ax_q.set_ylim(ax_box.get_ylim())
-    ax_q.set_yticks([-p, -q, 0, q, p])
-    ax_q.set_yticklabels([10, 25, 50, 75, 90])
-    ax_q.tick_params('y', right=False)
-    ax_q.set_ylabel(
-        'Normal quantiles',
-        fontdict=dict(rotation=-90),
-        labelpad=3*plt.rcParams['axes.labelpad']
-    )
+	ax_q = ax_box.twinx()
+	ax_q.set_ylim(ax_box.get_ylim())
+	ax_q.set_yticks([-p, -q, 0, q, p])
+	ax_q.set_yticklabels([10, 25, 50, 75, 90])
+	ax_q.tick_params('y', right=False)
+	ax_q.set_ylabel(
+		'Normal quantiles',
+		fontdict=dict(rotation=-90),
+		labelpad=3*plt.rcParams['axes.labelpad']
+	)
 
-    ax_rms.set_xticks([])
-    ax_rms.set_yticks(np.arange(0, 16, 5))
-    ax_rms.set_ylim(0, 15)
-    ax_rms.set_ylabel('RMS % error')
+	ax_rms.set_xticks([])
+	ax_rms.set_yticks(np.arange(0, 16, 5))
+	ax_rms.set_ylim(0, 15)
+	ax_rms.set_ylabel('RMS % error')
 
-    for y in ax_rms.get_yticks():
-        ax_rms.axhline(y, color='.5', zorder=-10)
+	for y in ax_rms.get_yticks():
+		ax_rms.axhline(y, color='.5', zorder=-10)
 
-    for ax in fig.axes:
-        ax.set_xlim(0, index - 1)
-        ax.spines['bottom'].set_visible(False)
+	for ax in fig.axes:
+		ax.set_xlim(0, index - 1)
+		ax.spines['bottom'].set_visible(False)
 
 
 @plot
 def validation_example(
-        system='PbPb2760',
-        obs='dNch_deta', subobs=None,
-        label=r'$dN_\mathrm{ch}/d\eta$',
-        cent=(20, 30)
+		system='PbPb2760',
+		obs='dNch_deta', subobs=None,
+		label=r'$dN_\mathrm{ch}/d\eta$',
+		cent=(20, 30)
 ):
-    """
-    Example of emulator validation for a single observable.  Scatterplot of
-    model calculations vs emulator predictions with histogram and boxplot of
-    normalized residuals.
+	"""
+	Example of emulator validation for a single observable.  Scatterplot of
+	model calculations vs emulator predictions with histogram and boxplot of
+	normalized residuals.
 
-    """
-    fig, axes = plt.subplots(
-        ncols=2, figsize=(4., 2.5),
-        gridspec_kw=dict(width_ratios=[3, 1])
-    )
+	"""
+	fig, axes = plt.subplots(
+		ncols=2, figsize=(4., 2.5),
+		gridspec_kw=dict(width_ratios=[3, 1])
+	)
 
-    ax_scatter, ax_hist = axes
+	ax_scatter, ax_hist = axes
 
-    vdata = model.validation_data[system][obs][subobs]
-    cent_slc = (slice(None), vdata['cent'].index(cent))
-    y = vdata['Y'][cent_slc]
+	vdata = model.validation_data[system][obs][subobs]
+	cent_slc = (slice(None), vdata['cent'].index(cent))
+	y = vdata['Y'][cent_slc]
 
-    mean, cov = emulators[system].predict(
-        Design(system, validation=True).array,
-        return_cov=True
-    )
-    y_ = mean[obs][subobs][cent_slc]
-    std_ = np.sqrt(cov[(obs, subobs), (obs, subobs)].T.diagonal()[cent_slc])
+	mean, cov = emulators[system].predict(
+		Design(system, validation=True).array,
+		return_cov=True
+	)
+	y_ = mean[obs][subobs][cent_slc]
+	std_ = np.sqrt(cov[(obs, subobs), (obs, subobs)].T.diagonal()[cent_slc])
 
-    color = obs_color(obs, subobs)
-    alpha = .6
+	color = obs_color(obs, subobs)
+	alpha = .6
 
-    ax_scatter.set_aspect('equal')
-    ax_scatter.errorbar(
-        y_, y, xerr=std_,
-        fmt='o', ms=2.5, mew=.1, mec='white',
-        color=color, alpha=alpha
-    )
-    dy = .03*y.ptp()
-    x = [y.min() - dy, y.max() + dy]
-    ax_scatter.plot(x, x, color='.4')
-    ax_scatter.set_xlabel('Emulator prediction')
-    ax_scatter.set_ylabel('Model calculation')
-    ax_scatter.text(
-        .04, .96, '{} {}–{}%'.format(label, *cent),
-        horizontalalignment='left', verticalalignment='top',
-        transform=ax_scatter.transAxes
-    )
+	ax_scatter.set_aspect('equal')
+	ax_scatter.errorbar(
+		y_, y, xerr=std_,
+		fmt='o', ms=2.5, mew=.1, mec='white',
+		color=color, alpha=alpha
+	)
+	dy = .03*y.ptp()
+	x = [y.min() - dy, y.max() + dy]
+	ax_scatter.plot(x, x, color='.4')
+	ax_scatter.set_xlabel('Emulator prediction')
+	ax_scatter.set_ylabel('Model calculation')
+	ax_scatter.text(
+		.04, .96, '{} {}–{}%'.format(label, *cent),
+		horizontalalignment='left', verticalalignment='top',
+		transform=ax_scatter.transAxes
+	)
 
-    zmax = 3.5
-    zrange = (-zmax, zmax)
+	zmax = 3.5
+	zrange = (-zmax, zmax)
 
-    z = (y_ - y)/std_
+	z = (y_ - y)/std_
 
-    ax_hist.hist(
-        z, bins=30, range=zrange, normed=True,
-        orientation='horizontal', color=color, alpha=alpha
-    )
-    x = np.linspace(-zmax, zmax, 1000)
-    ax_hist.plot(np.exp(-.5*x*x)/np.sqrt(2*np.pi), x, color='.25')
+	ax_hist.hist(
+		z, bins=30, range=zrange, normed=True,
+		orientation='horizontal', color=color, alpha=alpha
+	)
+	x = np.linspace(-zmax, zmax, 1000)
+	ax_hist.plot(np.exp(-.5*x*x)/np.sqrt(2*np.pi), x, color='.25')
 
-    box_x = .75
-    box_width = .1
+	box_x = .75
+	box_width = .1
 
-    boxplot(
-        ax_hist, np.percentile(z, [10, 25, 50, 75, 90]),
-        x=box_x, box_width=box_width, color=color, alpha=alpha
-    )
+	boxplot(
+		ax_hist, np.percentile(z, [10, 25, 50, 75, 90]),
+		x=box_x, box_width=box_width, color=color, alpha=alpha
+	)
 
-    guide_width = 2.5*box_width
+	guide_width = 2.5*box_width
 
-    q, p = np.sqrt(2) * special.erfinv(2*np.array([.75, .90]) - 1)
-    ax_hist.add_patch(patches.Rectangle(
-        xy=(box_x - .5*guide_width, -q),
-        width=guide_width, height=2*q,
-        color='.85', zorder=-20
-    ))
-    for s in [-1, 0, 1]:
-        ax_hist.plot(
-            [box_x - .5*guide_width, box_x + .5*guide_width], 2*[s*p],
-            color='.5', zorder=-10
-        )
+	q, p = np.sqrt(2) * special.erfinv(2*np.array([.75, .90]) - 1)
+	ax_hist.add_patch(patches.Rectangle(
+		xy=(box_x - .5*guide_width, -q),
+		width=guide_width, height=2*q,
+		color='.85', zorder=-20
+	))
+	for s in [-1, 0, 1]:
+		ax_hist.plot(
+			[box_x - .5*guide_width, box_x + .5*guide_width], 2*[s*p],
+			color='.5', zorder=-10
+		)
 
-    ax_hist.set_ylim(zrange)
-    ax_hist.spines['bottom'].set_visible(False)
-    ax_hist.tick_params('x', bottom=False, labelbottom=False)
-    ax_hist.set_ylabel('Normalized residuals')
+	ax_hist.set_ylim(zrange)
+	ax_hist.spines['bottom'].set_visible(False)
+	ax_hist.tick_params('x', bottom=False, labelbottom=False)
+	ax_hist.set_ylabel('Normalized residuals')
 
-    ax_q = ax_hist.twinx()
-    ax_q.spines['bottom'].set_visible(False)
-    ax_q.set_ylim(ax_hist.get_ylim())
-    ax_q.set_yticks([-p, -q, 0, q, p])
-    ax_q.set_yticklabels([10, 25, 50, 75, 90])
-    ax_q.tick_params('y', right=False)
-    ax_q.set_ylabel(
-        'Normal quantiles',
-        fontdict=dict(rotation=-90),
-        labelpad=3*plt.rcParams['axes.labelpad']
-    )
+	ax_q = ax_hist.twinx()
+	ax_q.spines['bottom'].set_visible(False)
+	ax_q.set_ylim(ax_hist.get_ylim())
+	ax_q.set_yticks([-p, -q, 0, q, p])
+	ax_q.set_yticklabels([10, 25, 50, 75, 90])
+	ax_q.tick_params('y', right=False)
+	ax_q.set_ylabel(
+		'Normal quantiles',
+		fontdict=dict(rotation=-90),
+		labelpad=3*plt.rcParams['axes.labelpad']
+	)
 
 
 default_system = 'PbPb5020'
@@ -2519,114 +2709,114 @@ default_nPDF = 'EPPS'
 
 @plot
 def diag_pca(system=default_system, nPDF=default_nPDF):
-    """
-    Diagnostic: histograms of principal components and scatterplots of pairs.
+	"""
+	Diagnostic: histograms of principal components and scatterplots of pairs.
 
-    """
-    Y = [g.y_train_ for g in emulators[nPDF][system].gps]
-    n = len(Y)
-    ymax = np.ceil(max(np.fabs(y).max() for y in Y))
-    lim = (-ymax, ymax)
+	"""
+	Y = [g.y_train_ for g in emulators[nPDF][system].gps]
+	n = len(Y)
+	ymax = np.ceil(max(np.fabs(y).max() for y in Y))
+	lim = (-ymax, ymax)
 
-    fig, axes = plt.subplots(nrows=n, ncols=n, figsize=2*(n,))
+	fig, axes = plt.subplots(nrows=n, ncols=n, figsize=2*(n,))
 
-    for y, ax in zip(Y, axes.diagonal()):
-        ax.hist(y, bins=10)
-        ax.set_xlim(lim)
+	for y, ax in zip(Y, axes.diagonal()):
+		ax.hist(y, bins=10)
+		ax.set_xlim(lim)
 
-    for ny, nx in zip(*np.tril_indices_from(axes, k=-1)):
-        ax = axes[ny][nx]
-        ax.scatter(Y[nx], Y[ny])
-        ax.set_xlim(lim)
-        ax.set_ylim(lim)
-        axes[nx][ny].set_axis_off()
+	for ny, nx in zip(*np.tril_indices_from(axes, k=-1)):
+		ax = axes[ny][nx]
+		ax.scatter(Y[nx], Y[ny])
+		ax.set_xlim(lim)
+		ax.set_ylim(lim)
+		axes[nx][ny].set_axis_off()
 
-    for i in range(n):
-        label = 'PC {}'.format(i)
-        axes[-1][i].set_xlabel(label)
-        axes[i][0].set_ylabel(label)
+	for i in range(n):
+		label = 'PC {}'.format(i)
+		axes[-1][i].set_xlabel(label)
+		axes[i][0].set_ylabel(label)
 
 
 @plot
 def diag_emu(system=default_system, nPDF=default_nPDF):
-    """
-    Diagnostic: plots of each principal component vs each input parameter,
-    overlaid by emulator predictions at several points in design space.
+	"""
+	Diagnostic: plots of each principal component vs each input parameter,
+	overlaid by emulator predictions at several points in design space.
 
-    """
-    gps = emulators[nPDF][system].gps
-    nrows = len(gps)
-    ncols = gps[0].X_train_.shape[1]
+	"""
+	gps = emulators[nPDF][system].gps
+	nrows = len(gps)
+	ncols = gps[0].X_train_.shape[1]
 
-    w = 1.8
-    fig, axes = plt.subplots(
-        nrows=nrows, ncols=ncols,
-        figsize=(ncols*w, .8*nrows*w)
-    )
+	w = 1.8
+	fig, axes = plt.subplots(
+		nrows=nrows, ncols=ncols,
+		figsize=(ncols*w, .8*nrows*w)
+	)
 
-    ymax = np.ceil(max(np.fabs(g.y_train_).max() for g in gps))
-    ylim = (-ymax, ymax)
+	ymax = np.ceil(max(np.fabs(g.y_train_).max() for g in gps))
+	ylim = (-ymax, ymax)
 
-    design = Design(system)
+	design = Design(system)
 
-    for ny, (gp, row) in enumerate(zip(gps, axes)):
-        y = gp.y_train_
+	for ny, (gp, row) in enumerate(zip(gps, axes)):
+		y = gp.y_train_
 
-        for nx, (x, label, xlim, ax) in enumerate(zip(
-                gp.X_train_.T, design.labels, design.range, row
-        )):
-            ax.plot(x, y, 'o', ms=.8, color='.75', zorder=10)
+		for nx, (x, label, xlim, ax) in enumerate(zip(
+				gp.X_train_.T, design.labels, design.range, row
+		)):
+			ax.plot(x, y, 'o', ms=.8, color='.75', zorder=10)
 
-            x = np.linspace(xlim[0], xlim[1], 100)
-            X = np.empty((x.size, ncols))
+			x = np.linspace(xlim[0], xlim[1], 100)
+			X = np.empty((x.size, ncols))
 
-            for k, r in enumerate([.2, .5, .8]):
-                X[:] = r*design.min + (1 - r)*design.max
-                X[:, nx] = x
-                mean, std = gp.predict(X, return_std=True)
+			for k, r in enumerate([.2, .5, .8]):
+				X[:] = r*design.min + (1 - r)*design.max
+				X[:, nx] = x
+				mean, std = gp.predict(X, return_std=True)
 
-                color = plt.cm.tab10(k)
-                ax.plot(x, mean, lw=.2, color=color, zorder=30)
-                ax.fill_between(
-                    x, mean - std, mean + std,
-                    lw=0, color=color, alpha=.3, zorder=20
-                )
+				color = plt.cm.tab10(k)
+				ax.plot(x, mean, lw=.2, color=color, zorder=30)
+				ax.fill_between(
+					x, mean - std, mean + std,
+					lw=0, color=color, alpha=.3, zorder=20
+				)
 
-            ax.set_xlim(xlim)
-            ax.set_ylim(ylim)
+			ax.set_xlim(xlim)
+			ax.set_ylim(ylim)
 
-            ax.set_xlabel(label)
-            ax.set_ylabel('PC {}'.format(ny))
+			ax.set_xlabel(label)
+			ax.set_ylabel('PC {}'.format(ny))
 
 
 if __name__ == '__main__':
-    import argparse
-    from matplotlib.mathtext import MathTextWarning
+	import argparse
+	from matplotlib.mathtext import MathTextWarning
 
-    warnings.filterwarnings(
-        'ignore',
-        category=MathTextWarning,
-        message='Substituting with a symbol from Computer Modern.'
-    )
+	warnings.filterwarnings(
+		'ignore',
+		category=MathTextWarning,
+		message='Substituting with a symbol from Computer Modern.'
+	)
 
-    choices = list(plot_functions)
+	choices = list(plot_functions)
 
-    def arg_to_plot(arg):
-        arg = Path(arg).stem
-        if arg not in choices:
-            raise argparse.ArgumentTypeError(arg)
-        return arg
+	def arg_to_plot(arg):
+		arg = Path(arg).stem
+		if arg not in choices:
+			raise argparse.ArgumentTypeError(arg)
+		return arg
 
-    parser = argparse.ArgumentParser(description='generate plots')
-    parser.add_argument(
-        'plots', nargs='*', type=arg_to_plot, metavar='PLOT',
-        help='{} (default: all)'.format(', '.join(choices).join('{}'))
-    )
-    args = parser.parse_args()
+	parser = argparse.ArgumentParser(description='generate plots')
+	parser.add_argument(
+		'plots', nargs='*', type=arg_to_plot, metavar='PLOT',
+		help='{} (default: all)'.format(', '.join(choices).join('{}'))
+	)
+	args = parser.parse_args()
 
-    if args.plots:
-        for p in args.plots:
-            plot_functions[p]()
-    else:
-        for f in plot_functions.values():
-            f()
+	if args.plots:
+		for p in args.plots:
+			plot_functions[p]()
+	else:
+		for f in plot_functions.values():
+			f()

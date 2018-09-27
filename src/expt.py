@@ -314,9 +314,9 @@ def _data():
             data['PbPb5020']['ALICE']['V2']['D-avg'].update({cen: dset})
 
 
-        # 3) Prelim Data! CMS, Pb+Pb, D0 flow
+        # 3) CMS, Pb+Pb, D0 flow
         for cen in ['0-10','10-30','30-50']:
-            pTL, pTH, v2, stat, sys1, sys2 = np.loadtxt(prelimdir/'CMS-v2-{}.dat'.format(cen)).T
+            pTL, pTH, v2, stat, sys1, sys2 = np.loadtxt('./official-exp/CMS-v2-D-{}.dat'.format(cen)).T
             dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : v2,
@@ -326,9 +326,9 @@ def _data():
                     }
             data['PbPb5020']['CMS']['V2']['D0'].update({cen: dset})
 
-        # 4) Prelim Data! CMS, Pb+Pb, D0 RAA
+        # 4) CMS, Pb+Pb, D0 RAA
         for cen in ['0-10','0-100']:
-            pTL, pTH, RAA, stat, syserror = np.loadtxt(prelimdir/'CMS-Raa-{}.dat'.format(cen)).T
+            pTL, pTH, RAA, stat, syserror = np.loadtxt('./official-exp/CMS-Raa-D-{}.dat'.format(cen)).T
             dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : RAA,
@@ -336,9 +336,9 @@ def _data():
                               'sys': syserror}
                     }
             data['PbPb5020']['CMS']['RAA']['D0'].update({cen: dset})
-        # 5) Prelim Data! CMS, Pb+Pb, B+/- RAA
+        # 5) CMS, Pb+Pb, B+/- RAA
         for cen in ['0-100']:
-            pTL, pTH, RAA, stat, syserror = np.loadtxt(prelimdir/'CMS-Raa-B-{}.dat'.format(cen)).T
+            pTL, pTH, RAA, stat, syserror = np.loadtxt('./official-exp/CMS-Raa-B-{}.dat'.format(cen)).T
             dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : RAA,
