@@ -1,0 +1,9 @@
+# Fdb version 3
+["pdflatex"] 1542390715 "plots/posterior.pdf" "build/posterior.pdf" "posterior" 1542390715
+  "/home/wk42/.cache/texlive/texmf-var/web2c/pdftex/pdflatex.fmt" 1489761504 719143 88f19a8de1e457cb8af4a6ffd97a5f97 ""
+  "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1501961251 31949 3ae02a131d161fd383f5b89f8ad0930c ""
+  "build/posterior.aux" 1542390715 8 a94a2480d3289e625eea47cd1b285758 ""
+  "plots/posterior.pdf" 1525703029 793516 47ff81cc59952f8663be29762f2465d2 ""
+  (generated)
+  "build/posterior.pdf"
+  "build/posterior.log"
