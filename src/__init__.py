@@ -25,18 +25,15 @@ prelimdir = workdir / 'prelim-exp'
 #: such as ``'PbPb2760'``, ``'AuAu200'``, ``'pPb5020'``.
 #: Even if the project uses only a single system,
 #: this should still be a list of one system string.
-#systems = ['pp7000', 'PbPb2760', 'PbPb5020']
-#systems = ['PbPb2760', 'PbPb5020']
-systems = ['PbPb5020']
-nPDFs = ['EPPS','nCTEQ']
+systems = ['Pb-Pb-5020']#, 'Au-Au-200']
 
 def parse_system(system):
     """
     Parse a system string into a pair of projectiles and a beam energy.
 
     """
-    match = re.fullmatch('([A-Z]?[a-z])([A-Z]?[a-z])([0-9]+)', system)
-    return match.group(1, 2), int(match.group(3))
+    proj, targ, sqrts = system.split('-')
+    return proj, targ, int(sqrts)
 
 
 class lazydict(dict):

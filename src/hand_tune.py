@@ -1,4 +1,4 @@
-from . import cachedir, lazydict, model, expt, systems, nPDFs
+from . import cachedir, lazydict, model, expt, systems
 from .design import Design
 from .plots import observables_at
 import numpy as np
@@ -11,37 +11,12 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import tkinter as tk
 
-# parameter transformation
-phy_to_design = { 
-'tau_0': lambda x: x,
-'qhat_A': lambda x: np.log(1.+x),
-'qhat_B': lambda x: np.log(1.+x),
-'mu': lambda x: np.log(x)
-}
-
-design_to_phy = { 
-'tau_0': lambda x: x,
-'qhat_A': lambda x: np.exp(x)-1.,
-'qhat_B': lambda x: np.exp(x)-1.,
-'mu': lambda x: np.exp(x)
-} 
-
-
 class Application(tk.Frame):
     def __init__(self, Names, master=None):
         self.Names = Names
         super().__init__(master)
-        self.nPDF = 'EPPS' # default
         self.system = 'PbPb5020'
         self.createWidgets()
-
-    def toggle(self):
-        if self.change_nPDF.config('text')[-1] == 'nCTEQ, click to switch':
-            self.change_nPDF.config(text='EPPS, click to switch')
-            self.nPDF = 'EPPS'
-        else:
-            self.change_nPDF.config(text='nCTEQ, click to switch')
-            self.nPDF = 'nCTEQ'
 
     def createWidgets(self):
         fig=plt.figure(figsize=(8,6))

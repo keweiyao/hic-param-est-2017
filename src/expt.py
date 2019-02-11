@@ -194,25 +194,11 @@ class HEPData:
         pT = np.array(pT)
         x=np.array([(a + b)/2 for (a, b) in pT])
         return dict(
-            pT=pT,
+            xbins=pT,
             x=x,
             y=np.array(y),
             yerr={k: np.array(v) for k, v in yerr.items()},
         )
-
-def cut(d, pTcut=10.):
-    for k in sorted(d):
-        v = d[k]
-        for a in v:
-            for b in v[a]:
-                for c in v[a][b]:
-                    iv = v[a][b][c]
-                    cut = iv['x']>pTcut
-                    iv['x'] = iv['x'][cut]
-                    iv['y'] = iv['y'][cut]
-                    iv['pT'] = iv['pT'][cut]
-                    iv['yerr']['stat'] = iv['yerr']['stat'][cut]
-                    iv['yerr']['sys'] = iv['yerr']['sys'][cut]
 
 def _data():
     """
@@ -241,113 +227,112 @@ def _data():
     # ALICE, p+p, sqrts=7TeV, D meson spectra
 
     ####### SQRTS = 7000 GeV #####################
-    if 'pp7000' in systems:
-        data['pp7000'].update({'dX/dp/dy': {}})
+    if 'p-p-7000' in systems:
+        data['p-p-7000'].update({'dX/dp/dy': {}})
         # 1) Particle spectra
         for i, D in enumerate(['D0', 'D+', 'D*'], start=1):
             dset = HEPData(1511870, i+1).dataset('d$\\sigma$/d $p_{\\rm{T}}$dy')
-            data['pp7000']['dX/dp/dy'][D] = {'MB': dset}
+            data['p-p-7000']['dX/dp/dy'][D] = {'MB': dset}
 
     ####### SQRTS = 2760 GeV #####################
-    if 'PbPb2760' in systems:
-        data['PbPb2760'].update({'V2': {'D-avg':{}, 'HF->e+e-':{}, 'D0':{}},
+    if 'Pb-Pb-2760' in systems:
+        data['Pb-Pb-2760'].update({'V2': {'D-avg':{}, 'HF->e+e-':{}, 'D0':{}},
                                  'RAA': {'HF->e+e-':{}, 'D-avg':{}, 'B-avg':{}}
                                        })
 
         # 1) ALICE, Pb+Pb, Flow, D meson
         dset = HEPData(1233087, 4).dataset('V2')
-        data['PbPb2760']['V2']['D-avg'].update({'30-50': dset})
+        data['Pb-Pb-2760']['V2']['D-avg'].update({'30-50': dset})
 
         # 2) ALICE, Pb+Pb, Flow, HF -> e+e-
         for i, cen in enumerate(['0-10', '10-20', '20-40'], start=1):
             dset = HEPData(1466626, i).dataset("v2 +-(stat) +(systUncorr) - (systUncorr)")
-            data['PbPb2760']['V2']['HF->e+e-'].update({cen: dset})
+            data['Pb-Pb-2760']['V2']['HF->e+e-'].update({cen: dset})
 
         # 3) ALICE, Pb+Pb, Flow, D0
         for i, cen in enumerate(['0-10', '10-20', '30-50'], start=1):
             dset = HEPData(1294938, i).dataset("V2")
-            data['PbPb2760']['V2']['D0'].update({cen: dset})
+            data['Pb-Pb-2760']['V2']['D0'].update({cen: dset})
 
         # 4) ALICE, Pb+Pb, RAA, D meson
         for i, cen in enumerate(['0-10', '30-50'], start=15):
             dset = HEPData(1394580, i).dataset('$R_{\\rm AA}$')
-            data['PbPb2760']['RAA']['D-avg'].update({cen: dset})
+            data['Pb-Pb-2760']['RAA']['D-avg'].update({cen: dset})
 
         # 5) ALICE, Pb+Pb, RAA, c, b hadron to e+e-
         for i, cen in enumerate(['0-10', '10-20', '20-30',
                        '30-40', '40-50', '50-80'], start=7):
             dset = HEPData(1487727, i).dataset('$R_{AA}$')
-            data['PbPb2760']['RAA']['HF->e+e-'].update({cen: dset})
+            data['Pb-Pb-2760']['RAA']['HF->e+e-'].update({cen: dset})
 
 
     ####### SQRTS = 5020 GeV #####################
-    if 'PbPb5020' in systems:
-        data['PbPb5020']['ALICE'] =  {'V2': {'D-avg': {}},
+    if 'Pb-Pb-5020' in systems:
+        data['Pb-Pb-5020']['ALICE'] =  {'V2': {'D-avg': {}},
                                      'RAA': {'D-avg': {}}
                                     }
-        data['PbPb5020']['CMS'] =  {'V2': {'D0': {}},
+        data['Pb-Pb-5020']['CMS'] =  {'V2': {'D0': {}},
                                      'RAA': {'D0': {}, 'B':{}}
                                     }
         # 1) ALICE, Pb+Pb, meson flow
         dset = HEPData(1608612, 5).dataset('$v_2$')
-        data['PbPb5020']['ALICE']['V2']['D-avg'].update({'30-50': dset})
+        data['Pb-Pb-5020']['ALICE']['V2']['D-avg'].update({'30-50': dset})
 
         # 2) Prelim Data! ALICE, Pb+Pb, D Raa
         for cen in ['0-10','30-50','60-80']:
             pTL, pTH, raa, stat, sys = np.loadtxt(prelimdir/'ALICE-Raa-D-{}.dat'.format(cen)).T
-            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
+            dset = {'xbins':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : raa,
                     'yerr': { 'stat': stat,
                               'sys': sys}
                     }
-            data['PbPb5020']['ALICE']['RAA']['D-avg'].update({cen: dset})
+            data['Pb-Pb-5020']['ALICE']['RAA']['D-avg'].update({cen: dset})
 
         for cen in ['30-50-L','30-50-H']:
             pTL, pTH, raa, stat, sys = np.loadtxt(prelimdir/'ALICE-V2-D-{}.dat'.format(cen)).T
-            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
+            dset = {'xbins':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : raa,
                     'yerr': { 'stat': stat,
                               'sys': sys}
                     }
-            data['PbPb5020']['ALICE']['V2']['D-avg'].update({cen: dset})
+            data['Pb-Pb-5020']['ALICE']['V2']['D-avg'].update({cen: dset})
 
 
         # 3) CMS, Pb+Pb, D0 flow
         for cen in ['0-10','10-30','30-50']:
             pTL, pTH, v2, stat, sys1, sys2 = np.loadtxt('./official-exp/CMS-v2-D-{}.dat'.format(cen)).T
-            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
+            dset = {'xbins':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : v2,
                     'yerr': { 'stat': stat,
                               'sys': sys1,
                               }#'sys2': sys2}
                     }
-            data['PbPb5020']['CMS']['V2']['D0'].update({cen: dset})
+            data['Pb-Pb-5020']['CMS']['V2']['D0'].update({cen: dset})
 
         # 4) CMS, Pb+Pb, D0 RAA
         for cen in ['0-10','0-100']:
             pTL, pTH, RAA, stat, syserror = np.loadtxt('./official-exp/CMS-Raa-D-{}.dat'.format(cen)).T
-            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
+            dset = {'xbins':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : RAA,
                     'yerr': { 'stat': stat,
                               'sys': syserror}
                     }
-            data['PbPb5020']['CMS']['RAA']['D0'].update({cen: dset})
+            data['Pb-Pb-5020']['CMS']['RAA']['D0'].update({cen: dset})
         # 5) CMS, Pb+Pb, B+/- RAA
         for cen in ['0-100']:
             pTL, pTH, RAA, stat, syserror = np.loadtxt('./official-exp/CMS-Raa-B-{}.dat'.format(cen)).T
-            dset = {'pT':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
+            dset = {'xbins':np.array([(pl, ph) for pl, ph in zip(pTL, pTH)]),
                     'x' : (pTL+pTH)/2.,
                     'y' : RAA,
                     'yerr': { 'stat': stat,
                               'sys': syserror}
                     }
-            data['PbPb5020']['CMS']['RAA']['B'].update({cen: dset})
+            data['Pb-Pb-5020']['CMS']['RAA']['B'].update({cen: dset})
 
-    #cut(data['PbPb5020'], 10.0)
     return data
 
 
@@ -399,7 +384,7 @@ ppdata = _baseline_data()
 def cov(
         system1, exp1, obs1, specie1, cen1,
         system2, exp2, obs2, specie2, cen2,
-        stat_frac=1e-4, log_pT_corr_length=.01, cross_factor=0.6,
+        stat_frac=1e-4, log_pT_corr_length=.5, cross_factor=0.3,
 ):
     """
     Estimate a covariance matrix for the given system and pair of observables,
@@ -443,27 +428,26 @@ def cov(
     x1, y1, stat1, sys1 = unpack(system1, exp1, obs1, specie1, cen1)
     x2, y2, stat2, sys2 = unpack(system2, exp2, obs2, specie2, cen2)
 
-    same_obs = (obs1 == obs2) and (system1==system2) and (specie1 == specie2) \
-                    and (cen1 == cen2) and (exp1==exp2)
-    same_class = (obs1 == obs2) and (system1==system2) and (exp1==exp2)
-    if (not same_obs) and (not same_class):
-        return np.zeros([x1.size, x2.size])
-
-    # compute the sys error covariance
-    C = (
-        np.exp(-.5*(np.subtract.outer(np.log(x1), np.log(x2))/log_pT_corr_length)**2) *
-        np.outer(sys1, sys2)
-    )
-
-    if (not same_obs) and same_class:
-        C *= cross_factor
-
-    if same_obs:
-        # add stat error to diagonal
-        C.flat[::C.shape[0]+1] += stat1**2
-        
-    return C
-
+    C= np.zeros([x1.size, x2.size])
+    if (exp1 != exp2):
+        return C
+    else:
+        if (system1 != system2):
+            return C
+        else:
+            if (obs1 != obs2):
+                return C
+            else:
+                if (specie1 != specie2):
+                    return C
+                else:
+                    if cen1 != cen2:
+                        if obs1 == 'RAA':
+                            return np.exp(-.5*(np.subtract.outer(np.log(x1), np.log(x2))/log_pT_corr_length)**2)*np.outer(sys1, sys2) * cross_factor
+                        else:
+                            return C
+                    else:
+                        return np.diag(stat1**2) + np.exp(-.5*(np.subtract.outer(np.log(x1), np.log(x2))/log_pT_corr_length)**2)*np.outer(sys1, sys2)
 
 def print_data(d, indent=0):
     """
@@ -510,9 +494,9 @@ def plot_data(d, indent=0):
 
 def test_cov():
     covm = cov(
-        'PbPb5020', 'CMS', 'RAA', 'D0', '0-10', 'PbPb5020', 'CMS', 'RAA', 'B', '0-100', )
+        'Pb-Pb-5020', 'CMS', 'RAA', 'D0', '0-10', 'Pb-Pb-5020', 'CMS', 'RAA', 'D0', '0-100', )
     import matplotlib.pyplot as plt
-    plt.imshow(np.flipud(covm.T))
+    plt.imshow(np.flipud(covm.T)**.5)
     plt.colorbar()
     plt.show()
 
@@ -522,5 +506,5 @@ if __name__ == '__main__':
     import pickle
     with open('exp.pkl','bw') as f:
         pickle.dump(data, f)
-    plot_data(data['PbPb5020'])
+    plot_data(data['Pb-Pb-5020'])
     

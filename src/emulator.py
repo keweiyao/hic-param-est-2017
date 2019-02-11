@@ -26,7 +26,6 @@ from sklearn.preprocessing import StandardScaler
 from . import cachedir, lazydict, model
 from .design import Design
 from . import expt
-from . import nPDFs
 
 class _Covariance:
     """
@@ -69,16 +68,15 @@ class Emulator:
     #: ``(obs, [list of subobs])``.
     observables = [
         ('CMS', 'RAA', 'D0', ['0-10', '0-100']),
-        ('CMS', 'RAA', 'B', ['0-100']),
         ('CMS', 'V2', 'D0', ['0-10', '10-30', '30-50']),
         ('ALICE', 'RAA', 'D-avg', ['0-10', '30-50', '60-80']),
-        ('ALICE', 'V2', 'D-avg', ['30-50','30-50-L','30-50-H']),
+        ('ALICE', 'V2', 'D-avg', ['30-50']),
     ]
 
-    def __init__(self, system, nPDF, npc=10, nrestarts=0):
+    def __init__(self, system, npc=8, nrestarts=10, self_validation=False):
         logging.info(
-            'training emulator for system %s nPDF %s (%d PC, %d restarts)',
-            system, nPDF, npc, nrestarts
+            'training emulator for system  %s (%d PC, %d restarts)',
+            system, npc, nrestarts
         )
 
         Y = []
@@ -89,14 +87,11 @@ class Emulator:
         for exp, obs, specie, cenlist in self.observables:
             self._slices[exp][obs][specie] = {}
             for cen in cenlist:
-                raw = model.data[system][nPDF][exp][obs][specie][cen]['Y']
-                print(raw.shape ,'d')
+                raw = model.data[system][exp][obs][specie][cen]['y']
                 Y.append(raw)
                 n = Y[-1].shape[1]
                 self._slices[exp][obs][specie][cen] = slice(nobs, nobs + n)
                 nobs += n
-        for iY in Y:
-            print(len(iY.shape))
         Y = np.concatenate(Y, axis=1)
 
         self.npc = npc
@@ -112,27 +107,55 @@ class Emulator:
         # Gaussian correlation (RBF) plus a noise term.
         design = Design(system)
         ptp = design.max - design.min
-        print(ptp)
         kernel = (
             1. * kernels.RBF(
                 length_scale=ptp,
-                length_scale_bounds=np.outer(ptp, (1e-1, 1e1))
+                length_scale_bounds=np.outer(ptp, (2e-1, 1e1))
             ) +
             kernels.WhiteKernel(
                 noise_level=.1**2,
-                noise_level_bounds=(1e-3, 1e2)
+                noise_level_bounds=(0.01, 1e1)
             )
         )
+        self.gps = [
+                GPR(
+                    kernel=kernel, alpha=0,
+                    n_restarts_optimizer=nrestarts,
+                    copy_X_train=False
+                )
+                for z in Z.T
+            ]
+        # Fit a GP (optimize the kernel hyperparameters) to each PC.
+        if self_validation:
+            emulated = []
+            calculated = []
+            error = []
+            #N = 50
+            #indices = np.random.choice(range(design.npoints), N)
+            for i in range(design.npoints):
+                print("Validating on paramset # ", i)
+                params = design.__array__()[i]
+                truth = Z[i]
+                validate_design = np.delete(design, i, axis=0)
+                validate_Z = np.delete(Z, i, axis=0)
+                for gp, z in zip(self.gps, validate_Z.T):
+                    gp.fit(validate_design, z)
+                pred = []
+                std = []
+                for gp in self.gps: 
+                    y, dy = gp.predict([params], return_std=True)
+                    pred.append(y[0])
+                    std.append(dy[0])
+                emulated.append(pred)
+                calculated.append(truth)
+                error.append(std)
+            self.validation = {"Emulator": np.array(emulated),
+							   "Error": np.array(error),
+                                "Truth": np.array(calculated)};
 
         # Fit a GP (optimize the kernel hyperparameters) to each PC.
-        self.gps = [
-            GPR(
-                kernel=kernel, alpha=0,
-                n_restarts_optimizer=nrestarts,
-                copy_X_train=False
-            ).fit(design, z)
-            for z in Z.T
-        ]
+        for gp, z in zip(self.gps, Z.T):
+            gp.fit(design, z)
 
         # Construct the full linear transformation matrix, which is just the PC
         # matrix with the first axis multiplied by the explained standard
@@ -168,26 +191,26 @@ class Emulator:
         # Add small term to diagonal for numerical stability.
         self._cov_trunc.flat[::nobs + 1] += 1e-4 * self.scaler.var_
 
+
     @classmethod
-    def from_cache(cls, system, nPDF, retrain=False, **kwargs):
+    def from_cache(cls, system, retrain=False, **kwargs):
         """
         Load the emulator for `system` from the cache if available, otherwise
         train and cache a new instance.
 
         """
-        cachefile = cachedir / 'emulator' / '{}-{}.pkl'.format(system, nPDF)
+        cachefile = cachedir / 'emulator' / '{}.pkl'.format(system)
 
         # cache the __dict__ rather than the Emulator instance itself
         # this way the __name__ doesn't matter, e.g. a pickled
         # __main__.Emulator can be unpickled as a src.emulator.Emulator
         if not retrain and cachefile.exists():
-            logging.debug('loading emulator for system %s with nPDF %s from cache', 
-                               system, nPDF)
+            logging.debug('loading emulator for system %s from cache', system)
             emu = cls.__new__(cls)
             emu.__dict__ = joblib.load(cachefile)
             return emu
 
-        emu = cls(system, nPDF, **kwargs)
+        emu = cls(system, **kwargs)
 
         logging.info('writing cache file %s', cachefile)
         cachefile.parent.mkdir(exist_ok=True)
@@ -309,20 +332,15 @@ class Emulator:
         )
 
 
-emulators = {nPDF: lazydict(Emulator.from_cache, nPDF) for nPDF in nPDFs}
+emulators = lazydict(Emulator.from_cache)
 
 
 if __name__ == '__main__':
     import argparse
-    from . import systems, nPDFs
+    from . import systems
 
     def arg_to_system(arg):
         if arg not in systems:
-            raise argparse.ArgumentTypeError(arg)
-        return arg
-
-    def arg_to_nPDF(arg):
-        if arg not in nPDFs:
             raise argparse.ArgumentTypeError(arg)
         return arg
 
@@ -339,7 +357,10 @@ if __name__ == '__main__':
         '--nrestarts', type=int,
         help='number of optimizer restarts'
     )
-
+    parser.add_argument(
+        '--self-validation', action='store_true',
+        help='do self validation'
+    )
     parser.add_argument(
         '--retrain', action='store_true',
         help='retrain even if emulator is cached'
@@ -350,29 +371,21 @@ if __name__ == '__main__':
         help='system(s) to train'
     )
 
-    parser.add_argument(
-        'nPDFs', nargs='*', type=arg_to_nPDF,
-        default=nPDFs, metavar='NPDF',
-        help='nPDF(s) to use'
-    )
-
     args = parser.parse_args()
     kwargs = vars(args)
 
     for s in kwargs.pop('systems'):
-        for nPDF in kwargs.pop('nPDFs'):
-            emu = Emulator.from_cache(s, nPDF, **kwargs)
+        emu = Emulator.from_cache(s, **kwargs)
 
-            print(s, ' ', nPDF)
-            print('{} PCs explain {:.5f} of variance'.format(
-                emu.npc,
-                emu.pca.explained_variance_ratio_[:emu.npc].sum()
-            ))
+        print('{} PCs explain {:.5f} of variance'.format(
+            emu.npc,
+            emu.pca.explained_variance_ratio_[:emu.npc].sum()
+        ))
 
-            for n, (evr, gp) in enumerate(zip(
-                    emu.pca.explained_variance_ratio_, emu.gps
-            )):
-                print(
-                    'GP {}: {:.5f} of variance, LML = {:.5g}, kernel: {}'
-                    .format(n, evr, gp.log_marginal_likelihood_value_, gp.kernel_)
-                )
+        for n, (evr, gp) in enumerate(zip(
+                emu.pca.explained_variance_ratio_, emu.gps
+        )):
+            print(
+                'GP {}: {:.5f} of variance, LML = {:.5g}, kernel: {}'
+                .format(n, evr, gp.log_marginal_likelihood_value_, gp.kernel_)
+            )

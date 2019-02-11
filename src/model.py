@@ -9,21 +9,21 @@ Model data files are expected with the file structure
 
 For example, the structure of my :file:`model_output` directory is ::
 
-    model_output
-    ├── main
-    │   ├── PbPb2760
-    │   │   ├── 000.dat
-    │   │   └── 001.dat
-    │   └── PbPb5020
-    │       ├── 000.dat
-    │       └── 001.dat
-    └── validation
-        ├── PbPb2760
-        │   ├── 000.dat
-        │   └── 001.dat
-        └── PbPb5020
-            ├── 000.dat
-            └── 001.dat
+	model_output
+	├── main
+	│   ├── Pb+Pb+2760
+	│   │   ├── 000.dat
+	│   │   └── 001.dat
+	│   └── Pb+Pb+5020
+	│  	 ├── 000.dat
+	│  	 └── 001.dat
+	└── validation
+		├── Pb+Pb+2760
+		│   ├── 000.dat
+		│   └── 001.dat
+		└── Pb+Pb+5020
+			├── 000.dat
+			└── 001.dat
 
 I have two design types (main and validation), two systems, and my design
 points are numbered 000-499 (most numbers omitted for brevity).
@@ -50,167 +50,149 @@ from . import workdir, cachedir, systems, lazydict, expt
 from .design import Design
 
 def _data(system, dataset='main'):
-    print(system)
-    """
-    Compute model observables for the given system and dataset.
+	print(system)
+	"""
+	Compute model observables for the given system and dataset.
 
-    dataset may be one of:
+	dataset may be one of:
 
-        - 'main' (training design)
-        - 'validation' (validation design)
-        - 'map' (maximum a posteriori, i.e. "best-fit" point)
+		- 'main' (training design)
+		- 'validation' (validation design)
+		- 'map' (maximum a posteriori, i.e. "best-fit" point)
 
-    """
-    if dataset not in {'main', 'validation', 'map'}:
-        raise ValueError('invalid dataset: {}'.format(dataset))
+	"""
+	if dataset not in {'main', 'validation', 'map'}:
+		raise ValueError('invalid dataset: {}'.format(dataset))
 
-    filep = Path(workdir, 'model_output', dataset, system, 'lhc-bc-out.hdf5')
+	cachefile = Path(cachedir, 'model', dataset, system, 'obs.h5')
+	print(cachefile)
+	logging.info(
+		'loading %s/%s data and computing observables',
+		system, dataset
+	)
 
-    cachefile = Path(cachedir, 'model', dataset, system, 'lhc-bc-out.hdf5')
+	expdata = expt.data[system]
+	raax_0_10 = expdata['CMS']['RAA']['D0']['0-10']['x']
+	raax_0_100 = expdata['CMS']['RAA']['D0']['0-100']['x']
+	v2x_0_10 = expdata['CMS']['V2']['D0']['0-10']['x']
+	v2x_10_30 = expdata['CMS']['V2']['D0']['10-30']['x']
+	v2x_30_50 = expdata['CMS']['V2']['D0']['30-50']['x']
+	raaAx_0_10 = expdata['ALICE']['RAA']['D-avg']['0-10']['x']
+	raaAx_30_50 = expdata['ALICE']['RAA']['D-avg']['30-50']['x']
+	raaAx_60_80 = expdata['ALICE']['RAA']['D-avg']['60-80']['x']
+	v2Ax_30_50 = expdata['ALICE']['V2']['D-avg']['30-50']['x']
+	v2Aeex_30_50 = expdata['ALICE']['V2']['D-avg']['30-50-H']['x']
 
-    logging.info(
-        'loading %s/%s data and computing observables',
-        system, dataset
-    )
+	def obs_dtype(centralities, NpTs):
+		return [ 
+					("{:s}".format(cen), 
+						[ ('xbins', np.float, [NpT,2]),
+						  ('x', np.float, NpT),
+						  ('y', np.float, NpT),
+						  ('yerr', np.float, NpT)
+						]
+					)
+					for cen, NpT in zip(centralities, NpTs)
+				]
+	dtype=[
+	('CMS', [ ('RAA', [
+		('D0', obs_dtype(['0-10','0-100'], [raax_0_10.size, raax_0_100.size])	)
+						   ]
+				  ), 
+	  ('V2',  [
+					('D0', obs_dtype(['0-10','10-30','30-50'], [v2x_0_10.size,v2x_10_30.size,v2x_30_50.size])	)
+			  ]
+	  ), 
+				]
+		),
+		('ALICE', [ ('RAA', [
+								('D-avg', obs_dtype(['0-10','30-50','60-80'], [raaAx_0_10.size, raaAx_30_50.size, raaAx_60_80.size])	)
+							]
+					),
+					('V2',  [
+								('D-avg', obs_dtype(['30-50'], [v2Ax_30_50.size])	)
+							]
+					),	
+				  ]
+		),
+		]
+	
+	if cachefile.exists():
+		d = Design("Pb-Pb-5020", npoints=250 if dataset!="validation" else 50, validation = (dataset=="validation"))
+		AllData = []
+		with h5py.File(cachefile,'r') as f:
+			for point in d.points:
+				data = np.empty([], dtype=dtype)
+				g = f['/{}.dat'.format(point)]
+				# CMS Raa
+				xbins = g['CMS/Raa/pT-bins'].value
+				x = (xbins[:,0]+xbins[:,1])/2.
+				y = g['CMS/Raa/D/y'].value
+				yerr = g['CMS/Raa/D/yerr'].value
+				data['CMS']['RAA']['D0']['0-10']['xbins'] = xbins
+				data['CMS']['RAA']['D0']['0-100']['xbins'] = xbins
+				data['CMS']['RAA']['D0']['0-10']['x'] = x
+				data['CMS']['RAA']['D0']['0-100']['x'] = x
+				data['CMS']['RAA']['D0']['0-10']['y'] = y[0]
+				data['CMS']['RAA']['D0']['0-10']['yerr'] = yerr[0]
+				data['CMS']['RAA']['D0']['0-100']['y'] = y[1]
+				data['CMS']['RAA']['D0']['0-100']['yerr'] = yerr[1]	
+				# CMS V2
+				xbins = g['CMS/vn_HF/pT-bins'].value
+				x = (xbins[:,0]+xbins[:,1])/2.
+				y = g['CMS/vn_HF/D+D*/y'].value
+				yerr = g['CMS/vn_HF/D+D*/yerr'].value
+				data['CMS']['V2']['D0']['0-10']['xbins'] = xbins[1:]
+				data['CMS']['V2']['D0']['10-30']['xbins'] = xbins
+				data['CMS']['V2']['D0']['30-50']['xbins'] = xbins
+				data['CMS']['V2']['D0']['0-10']['x'] = x[1:]
+				data['CMS']['V2']['D0']['10-30']['x'] = x
+				data['CMS']['V2']['D0']['30-50']['x'] = x
+				data['CMS']['V2']['D0']['0-10']['y'] = y[0,1:,0]
+				data['CMS']['V2']['D0']['10-30']['y'] = y[1,:,0]
+				data['CMS']['V2']['D0']['30-50']['y'] = y[2,:,0]
+				data['CMS']['V2']['D0']['0-10']['yerr'] = yerr[0,1:,0]
+				data['CMS']['V2']['D0']['10-30']['yerr'] = yerr[1,:,0]
+				data['CMS']['V2']['D0']['30-50']['yerr'] = yerr[2,:,0]		
+				# ALICE Raa
+				xbins = g['ALICE/Raa/pT-bins'].value
+				x = (xbins[:,0]+xbins[:,1])/2.
+				y = g['ALICE/Raa/D+D*/y'].value
+				yerr = g['ALICE/Raa/D+D*/yerr'].value
+				data['ALICE']['RAA']['D-avg']['0-10']['xbins'] = xbins
+				data['ALICE']['RAA']['D-avg']['30-50']['xbins'] = xbins[:-1]
+				data['ALICE']['RAA']['D-avg']['60-80']['xbins'] = xbins[:-1]
+				data['ALICE']['RAA']['D-avg']['0-10']['x'] = x
+				data['ALICE']['RAA']['D-avg']['30-50']['x'] = x[:-1]
+				data['ALICE']['RAA']['D-avg']['60-80']['x'] = x[:-1]
+				data['ALICE']['RAA']['D-avg']['0-10']['y'] = y[0,:]
+				data['ALICE']['RAA']['D-avg']['30-50']['y'] = y[1,:-1]
+				data['ALICE']['RAA']['D-avg']['60-80']['y'] = y[2,:-1]
+				data['ALICE']['RAA']['D-avg']['0-10']['yerr'] = yerr[0,:]
+				data['ALICE']['RAA']['D-avg']['30-50']['yerr'] = yerr[1,:-1]
+				data['ALICE']['RAA']['D-avg']['60-80']['yerr'] = yerr[2,:-1]
+				# ALICE V2
+				xbins = g['ALICE/vn_HF/pT-bins'].value
+				x = (xbins[:,0]+xbins[:,1])/2.
+				y = g['ALICE/vn_HF/D+D*/y'].value
+				yerr = g['ALICE/vn_HF/D+D*/yerr'].value
+				data['ALICE']['V2']['D-avg']['30-50']['xbins'] = xbins
+				data['ALICE']['V2']['D-avg']['30-50']['x'] = x
+				data['ALICE']['V2']['D-avg']['30-50']['y'] = y[0,:,0]
+				data['ALICE']['V2']['D-avg']['30-50']['yerr'] = yerr[0,:,0]
+		
+				AllData.append(data)
+		AllData = np.array(AllData)
+		return AllData
 
-    expdata = expt.data[system]
-    raax_0_10 = expdata['CMS']['RAA']['D0']['0-10']['x']
-    raax_0_100 = expdata['CMS']['RAA']['D0']['0-100']['x']
-    braax_0_100 = expdata['CMS']['RAA']['B']['0-100']['x']
-    v2x_0_10 = expdata['CMS']['V2']['D0']['0-10']['x']
-    v2x_10_30 = expdata['CMS']['V2']['D0']['10-30']['x']
-    v2x_30_50 = expdata['CMS']['V2']['D0']['30-50']['x']
-    raaAx_0_10 = expdata['ALICE']['RAA']['D-avg']['0-10']['x']
-    raaAx_30_50 = expdata['ALICE']['RAA']['D-avg']['30-50']['x']
-    raaAx_60_80 = expdata['ALICE']['RAA']['D-avg']['60-80']['x']
-    v2Ax_30_50 = expdata['ALICE']['V2']['D-avg']['30-50']['x']
-    v2Aeex_30_50 = expdata['ALICE']['V2']['D-avg']['30-50-H']['x']
-    f = h5py.File(filep, 'r')
-    modeldata = {'EPPS':{}, 'nCTEQ':{}}
-    # output a single calculation
-    """
-    p = f['76']
-    prefix = 'Fake-data-76/'
-    def fake(fname, x, yfake, ystat, ysys):
-        with open(prefix+fname, 'w') as f:            
-            for ex, ey, est, esy in  zip(x, yfake, ystat, ysys):
-                print(ex, ey, est, esy, file=f)
-    Raa_0_10 = p['CMS/EPPS/Raa/D/mean'][0,:]
-    Raa_0_100 = p['CMS/EPPS/Raa/D/mean'][1,:] 
-    bRaa_0_100 = p['CMS/EPPS/Raa/B+-/mean'][1, 3:-1]
-    v2_0_10 = p['CMS/EPPS/vn2/D+D*/mean'][0, 1:,0]
-    v2_10_30 = p['CMS/EPPS/vn2/D+D*/mean'][1,:,0] 
-    v2_30_50 = p['CMS/EPPS/vn2/D+D*/mean'][2,:,0] 
-    v2A_30_50 = p['ALICE/EPPS/vn2/D+D*/mean'][0, :, 0] 
-    v2ee_30_50_H = p['ALICE/EPPS/v2_ee/D+D*/mean'][0, :, 0] 
-    v2ee_30_50_L = p['ALICE/EPPS/v2_ee/D+D*/mean'][0, :, 1] 
-    RaaA_0_10 = p['ALICE/EPPS/Raa/D+D*/mean'][0, :] 
-    RaaA_30_50 = p['ALICE/EPPS/Raa/D+D*/mean'][1,:-1] 
-    RaaA_60_80 = p['ALICE/EPPS/Raa/D+D*/mean'][2,:-1]
-    fake("Fake-CMS-Raa-0-10", raax_0_10, Raa_0_10, 
-        expdata['CMS']['RAA']['D0']['0-10']['yerr']['stat'],
-        expdata['CMS']['RAA']['D0']['0-10']['yerr']['sys'])
-    fake("Fake-CMS-Raa-0-100", raax_0_100, Raa_0_100, 
-        expdata['CMS']['RAA']['D0']['0-100']['yerr']['stat'],
-        expdata['CMS']['RAA']['D0']['0-100']['yerr']['sys'])
-    fake("Fake-CMS-v2-0-10", v2x_0_10, v2_0_10, 
-        expdata['CMS']['V2']['D0']['0-10']['yerr']['stat'],
-        expdata['CMS']['V2']['D0']['0-10']['yerr']['sys'])
-    fake("Fake-CMS-v2-10-30", v2x_10_30, v2_10_30, 
-        expdata['CMS']['V2']['D0']['10-30']['yerr']['stat'],
-        expdata['CMS']['V2']['D0']['10-30']['yerr']['sys'])
-    fake("Fake-CMS-v2-30-50", v2x_30_50, v2_30_50, 
-        expdata['CMS']['V2']['D0']['30-50']['yerr']['stat'],
-        expdata['CMS']['V2']['D0']['30-50']['yerr']['sys'])  
-
-    fake("Fake-ALICE-Raa-0-10", raaAx_0_10, RaaA_0_10, 
-        expdata['ALICE']['RAA']['D-avg']['0-10']['yerr']['stat'],
-        expdata['ALICE']['RAA']['D-avg']['0-10']['yerr']['sys'])
-    fake("Fake-ALICE-Raa-30-50", raaAx_30_50, RaaA_30_50, 
-        expdata['ALICE']['RAA']['D-avg']['30-50']['yerr']['stat'],
-        expdata['ALICE']['RAA']['D-avg']['30-50']['yerr']['sys'])
-    fake("Fake-ALICE-Raa-60-80", raaAx_60_80, RaaA_60_80, 
-        expdata['ALICE']['RAA']['D-avg']['60-80']['yerr']['stat'],
-        expdata['ALICE']['RAA']['D-avg']['60-80']['yerr']['sys'])  
-    fake("Fake-ALICE-v2-30-50", v2Ax_30_50, v2A_30_50, 
-        expdata['ALICE']['V2']['D-avg']['30-50']['yerr']['stat'],
-        expdata['ALICE']['V2']['D-avg']['30-50']['yerr']['sys'])
-    """
-    def merge(A):
-        return np.array([A[1], A[2], A[3:5].mean(), A[5:7].mean(), A[7:9].mean()])
-    for nPDF in ['EPPS', 'nCTEQ']:
-        Raa_0_10 = np.array([p['CMS/'+nPDF+'/Raa/D/mean'][0,:] 
-                            for p in f.values()])
-        Raa_0_100 = np.array([p['CMS/'+nPDF+'/Raa/D/mean'][1,:] 
-                            for p in f.values()])
-        bRaa_0_100 = np.array([p['CMS/'+nPDF+'/Raa/B+-/mean'][1, 3:-1] 
-                            for p in f.values()])
-        v2_0_10 = np.array([p['CMS/'+nPDF+'/vn2/D+D*/mean'][0, 1:,0] 
-                            for p in f.values()])
-        v2_10_30 = np.array([p['CMS/'+nPDF+'/vn2/D+D*/mean'][1,:,0] 
-                            for p in f.values()])
-        v2_30_50 = np.array([p['CMS/'+nPDF+'/vn2/D+D*/mean'][2,:,0] 
-                            for p in f.values()])
-
-        v2A_30_50 = np.array([p['ALICE/'+nPDF+'/vn2/D+D*/mean'][0, :, 0] 
-                            for p in f.values()])
-        v2eeA_30_50_L = np.array([merge(p['ALICE/'+nPDF+'/v2_ee/D+D*/mean'][0, :, 0])
-                            for p in f.values()])
-        v2eeA_30_50_H = np.array([merge(p['ALICE/'+nPDF+'/v2_ee/D+D*/mean'][0, :, 1]) 
-                            for p in f.values()])
-        RaaA_0_10 = np.array([p['ALICE/'+nPDF+'/Raa/D+D*/mean'][0, :] 
-                            for p in f.values()])
-        RaaA_30_50 = np.array([p['ALICE/'+nPDF+'/Raa/D+D*/mean'][1,:-1] 
-                            for p in f.values()])
-        RaaA_60_80 = np.array([p['ALICE/'+nPDF+'/Raa/D+D*/mean'][2,:-1] 
-                            for p in f.values()])
-        modeldata[nPDF] = {'CMS': {
-                                'RAA': {'D0': { '0-10': {'x': raax_0_10, 
-                                                        'Y': Raa_0_10 }, 
-                                               '0-100': {'x': raax_0_100, 
-                                                         'Y': Raa_0_100} 
-                                              },
-                                        'B':  { '0-100': {'x': braax_0_100, 
-                                                         'Y': bRaa_0_100}
-                                              }
-                                        
-                                        },
-                                'V2': {'D0': {'0-10': {'x': v2x_0_10, 
-                                                       'Y': v2_0_10}, 
-                                              '10-30':{'x': v2x_10_30,  
-                                                       'Y': v2_10_30},
-                                              '30-50':{'x': v2x_30_50, 
-                                                       'Y': v2_30_50}
-                                            }
-                                      }  
-                                  },
-                          'ALICE': {
-                                'RAA': {'D-avg': { '0-10': {'x': raaAx_0_10, 
-                                                           'Y': RaaA_0_10 }, 
-                                                  '30-50': {'x': raaAx_30_50, 
-                                                            'Y': RaaA_30_50},
-                                                  '60-80': {'x': raaAx_60_80, 
-                                                            'Y': RaaA_60_80}
-                                                 }
-                                       },
-                                'V2': {'D-avg': {'30-50':{'x': v2Ax_30_50, 
-                                                       'Y': v2A_30_50 },
-                                                 '30-50-L':{'x': v2Aeex_30_50, 
-                                                       'Y': v2eeA_30_50_L },
-                                                 '30-50-H':{'x': v2Aeex_30_50, 
-                                                       'Y': v2eeA_30_50_H }
-                                            }
-                                       }  
-                                  }        
-                             }
-    return modeldata
 
 
 data = {s: _data(s, 'main') for s in systems}
+data_validation = {s: _data(s, 'validation') for s in systems}
 
 if __name__ == '__main__':
-    from pprint import pprint
-    for s in systems:
-        d = data[s]
-        print(s)
-        pprint(d)
+	from pprint import pprint
+	for s in systems:
+		d = data[s]
+		print(s)
+		pprint(d)

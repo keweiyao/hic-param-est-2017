@@ -126,17 +126,14 @@ class Chain:
     #: and silently ignored if not found
     observables = [
         ('CMS', 'RAA', 'D0', ['0-10', '0-100']),
-        ('CMS', 'RAA', 'B', ['0-100']),
         ('CMS', 'V2', 'D0', ['0-10', '10-30', '30-50']),
         ('ALICE', 'RAA', 'D-avg', ['0-10', '30-50', '60-80']),
-        ('ALICE', 'V2', 'D-avg', ['30-50','30-50-L', '30-50-H']),
+        ('ALICE', 'V2', 'D-avg', ['30-50']),
     ]
 
-    def __init__(self, path=workdir / 'mcmc' / 'chain.hdf', nPDF='EPPS'):
+    def __init__(self, path=workdir / 'mcmc' / 'chain.hdf'):
         self.path = path
         self.path.parent.mkdir(exist_ok=True)
-        self.nPDF = nPDF
-        print("Using "+nPDF)
         # parameter order:
         #  - all other physical parameters (same for all systems)
         #  - model sys error
@@ -202,7 +199,7 @@ class Chain:
 
         """
         return {
-            sys: emulators[self.nPDF][sys].predict(
+            sys: emulators[sys].predict(
                 X[:, [n] + self._common_indices],
                 **kwargs
             )
@@ -225,7 +222,7 @@ class Chain:
 
         inside = np.all((X > self.min) & (X < self.max), axis=1)
         lp[~inside] = -np.inf
-
+        
         nsamples = np.count_nonzero(inside)
 
         if nsamples > 0:
@@ -287,7 +284,7 @@ class Chain:
         """
         return f(args)
 
-    def run_mcmc(self, nsteps, nburnsteps=None, nwalkers=None, status=None, nPDF=None):
+    def run_mcmc(self, nsteps, nburnsteps=None, nwalkers=None, status=None):
 
         """
         Run MCMC model calibration.  If the chain already exists, continue from
@@ -296,7 +293,7 @@ class Chain:
         """
         with self.open('a') as f:
             try:
-                dset = f['chain/'+self.nPDF]
+                dset = f['chain/']
             except KeyError:
                 burn = True
                 if nburnsteps is None or nwalkers is None:
@@ -305,7 +302,7 @@ class Chain:
                     )
                     return
                 dset = f.create_dataset(
-                    'chain/'+self.nPDF, dtype='f8',
+                    'chain/', dtype='f8',
                     shape=(nwalkers, 0, self.ndim),
                     chunks=(nwalkers, 1, self.ndim),
                     maxshape=(nwalkers, None, self.ndim),
@@ -375,7 +372,7 @@ class Chain:
 
         """
         with self.open(mode) as f:
-            yield f[name+'/'+self.nPDF]
+            yield f[name+'/']
 
     def load(self, *keys, thin=1):
         """
@@ -449,12 +446,7 @@ def main():
         '--status', type=int,
         help='number of steps between logging status'
     )
-    parser.add_argument(
-        '--nPDF', type=str,
-        help='Study which nPDF'
-    )
-    print(vars(parser.parse_args()).get('nPDF'))
-    chain = Chain(nPDF=vars(parser.parse_args()).get('nPDF'))
+    chain = Chain()
     chain.run_mcmc(**vars(parser.parse_args()))
 
 
